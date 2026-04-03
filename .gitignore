@@ -1,0 +1,21 @@
+node_modules
+.DS_Store
+dist
+dist-ssr
+*.local
+.env
+.nitro
+.tanstack
+.wrangler
+.output
+.vinxi
+__unconfig*
+todos.json
+
+# Personal tooling — not part of the project
+.agents/
+.claude/
+.cursor/
+.vscode/
+.cursorrules
+.cta.json

@@ -1,0 +1,122 @@
+.panel {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+}
+
+.video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  display: block;
+}
+
+/* When no video, show fighter photo as background */
+.photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  display: block;
+}
+
+.placeholder {
+  width: 100%;
+  height: 100%;
+  background: #0a0a0a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.placeholderText {
+  font-family: var(--mantine-font-family-headings);
+  font-weight: 800;
+  font-size: clamp(2rem, 6vw, 5rem);
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.05);
+  letter-spacing: 0.1em;
+  text-align: center;
+}
+
+/* Gradient fades */
+.spinnerWrap {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 2;
+}
+
+.spinnerLabel {
+  font-family: var(--mantine-font-family-headings);
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.fadeBottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 45%;
+  pointer-events: none;
+  background: linear-gradient(to top, #000 0%, rgba(0, 0, 0, 0.7) 40%, transparent 100%);
+}
+
+/* Fighter info overlay — fades in after video ends */
+.overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: var(--mantine-spacing-lg);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+  pointer-events: none;
+}
+
+.overlay[data-visible='true'] {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.ranking {
+  font-family: var(--mantine-font-family-headings);
+  font-weight: 800;
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--mantine-primary-color-6);
+  margin-bottom: 4px;
+}
+
+.name {
+  font-family: var(--mantine-font-family-headings);
+  font-weight: 800;
+  font-size: clamp(1.4rem, 2.5vw, 2.4rem);
+  line-height: 0.95;
+  text-transform: uppercase;
+  color: #fff;
+  letter-spacing: -0.01em;
+}
+
+.record {
+  font-family: var(--mantine-font-family-headings);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 6px;
+}

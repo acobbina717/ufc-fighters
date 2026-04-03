@@ -1,0 +1,183 @@
+.root {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+}
+
+.panel {
+  position: relative;
+  z-index: 1;
+  background: light-dark(#fff, var(--mantine-color-dark-7));
+  width: min(900px, 96vw);
+  max-height: 92vh;
+  border-radius: var(--mantine-radius-xs);
+  overflow: hidden;
+  display: flex;
+  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.35);
+}
+
+.closeBtn {
+  position: absolute;
+  top: var(--mantine-spacing-md);
+  right: var(--mantine-spacing-md);
+  z-index: 10;
+  border: 2px solid light-dark(#eee, var(--mantine-color-dark-4)) !important;
+  background: light-dark(#fff, var(--mantine-color-dark-6)) !important;
+  color: light-dark(#444, var(--mantine-color-dark-1)) !important;
+}
+
+.closeBtn:hover {
+  background: var(--mantine-primary-color-6) !important;
+  color: #fff !important;
+  border-color: var(--mantine-primary-color-6) !important;
+}
+
+.photoCol {
+  flex: 0 0 320px;
+  background: light-dark(#f0f0f0, var(--mantine-color-dark-5));
+  overflow: hidden;
+}
+
+.photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+}
+
+.initials {
+  width: 100%;
+  height: 100%;
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mantine-font-family-headings);
+  font-size: 96px;
+  font-weight: 800;
+  color: var(--mantine-primary-color-6);
+  background: light-dark(
+    linear-gradient(135deg, #fff0f0, #ffe0e0),
+    linear-gradient(135deg, var(--mantine-color-dark-6), var(--mantine-color-dark-5))
+  );
+}
+
+.details {
+  flex: 1;
+  padding: var(--mantine-spacing-xl) 36px;
+  overflow-y: auto;
+  min-width: 0;
+}
+
+.rankBadge {
+  font-family: var(--mantine-font-family-headings) !important;
+  font-weight: 800 !important;
+  font-size: 13px !important;
+  letter-spacing: 0.15em !important;
+  margin-bottom: 10px;
+  height: 26px !important;
+}
+
+.name {
+  font-family: var(--mantine-font-family-headings);
+  font-weight: 800;
+  font-size: clamp(28px, 4vw, 44px) !important;
+  letter-spacing: 0.02em;
+  line-height: 1 !important;
+  color: light-dark(#111, var(--mantine-color-dark-0));
+  margin: 0 0 6px !important;
+}
+
+.nickname {
+  font-size: 15px !important;
+  color: light-dark(#888, var(--mantine-color-dark-2)) !important;
+  font-style: italic !important;
+  margin-bottom: var(--mantine-spacing-sm) !important;
+}
+
+.metaBadge {
+  font-size: 11px !important;
+  letter-spacing: 0.08em !important;
+  font-family: var(--mantine-font-family-headings) !important;
+  font-weight: 700 !important;
+  height: 22px !important;
+}
+
+.record {
+  margin-bottom: 28px;
+  border: 2px solid light-dark(#eee, var(--mantine-color-dark-4));
+  border-radius: var(--mantine-radius-xs);
+  overflow: hidden;
+  width: fit-content;
+}
+
+.recordNum {
+  font-family: var(--mantine-font-family-headings) !important;
+  font-weight: 800 !important;
+  font-size: 36px !important;
+  line-height: 1 !important;
+}
+
+.recordNum[data-type='wins'] {
+  color: #16a34a !important;
+}
+
+.recordNum[data-type='losses'] {
+  color: var(--mantine-primary-color-6) !important;
+}
+
+.recordNum[data-type='draws'] {
+  color: light-dark(#888, var(--mantine-color-dark-2)) !important;
+}
+
+.recordLabel {
+  font-size: 11px !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  color: light-dark(#999, var(--mantine-color-dark-3)) !important;
+  margin-top: 2px !important;
+}
+
+.statsLabel {
+  font-family: var(--mantine-font-family-headings) !important;
+  font-weight: 800 !important;
+  font-size: 13px !important;
+  letter-spacing: 0.15em !important;
+  text-transform: uppercase !important;
+  color: light-dark(#999, var(--mantine-color-dark-3)) !important;
+  margin-bottom: var(--mantine-spacing-md) !important;
+}
+
+.statLabel {
+  font-size: 11px !important;
+  color: light-dark(#666, var(--mantine-color-dark-2)) !important;
+  text-align: center !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  font-family: var(--mantine-font-family-headings) !important;
+  font-weight: 700 !important;
+}
+
+@media (max-width: 48em) {
+  .panel {
+    flex-direction: column;
+  }
+
+  .photoCol {
+    flex: 0 0 240px;
+  }
+
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}

@@ -1,0 +1,50 @@
+.label {
+  font-family: var(--mantine-font-family-headings);
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+  margin-bottom: 6px;
+}
+
+.input {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-family: var(--mantine-font-family-headings);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 13px;
+}
+
+.input:focus {
+  border-color: var(--mantine-primary-color-6);
+}
+
+.dropdown {
+  background: #111;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.empty {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 13px;
+}
+
+.optionThumb {
+  width: 28px;
+  height: 28px;
+  border-radius: 2px;
+  object-fit: cover;
+  object-position: top;
+  flex-shrink: 0;
+}
+
+.optionName {
+  flex: 1;
+  font-size: var(--mantine-font-size-sm);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-family: var(--mantine-font-family-headings);
+}

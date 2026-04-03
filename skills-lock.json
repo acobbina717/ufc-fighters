@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "mantine-dev": {
+      "source": "itechmeat/llm-code",
+      "sourceType": "github",
+      "computedHash": "f515cd6e70bab4dfb2165e1b6ccd4ce38de2d7ce93d5c5430ff6b66dccb7c59d"
+    }
+  }
+}

@@ -1,0 +1,97 @@
+.chapter {
+  position: relative;
+  height: 100svh;
+  background: #000;
+  overflow: hidden;
+}
+
+/* Macro label — always visible, top-left */
+.macroLabel {
+  position: absolute;
+  top: 28px;
+  left: max(150px, 12vw);
+  font-family: var(--mantine-font-family-headings);
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: 0.4em;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  z-index: 10;
+}
+
+/* Progress bar — below macro label */
+.progressBar {
+  position: absolute;
+  top: 52px;
+  left: max(150px, 12vw);
+  right: max(150px, 12vw);
+  z-index: 10;
+}
+
+/* Spotlights container */
+.spotlights {
+  position: absolute;
+  inset: 0;
+}
+
+/* Division entry crash-in overlay — above spotlights, below macro label */
+.divisionEntries {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.divisionEntry {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  padding-left: max(150px, 12vw);
+  font-family: var(--mantine-font-family-headings);
+  font-weight: 800;
+  font-size: clamp(64px, 11vw, 160px);
+  line-height: 0.88;
+  letter-spacing: -0.025em;
+  color: #fff;
+  text-transform: uppercase;
+  overflow: hidden; /* required for SplitText mask: 'chars' clipping */
+  opacity: 0; /* hidden until GSAP reveals via timeline */
+}
+
+
+/* ─── Mobile ─────────────────────────────────────────────── */
+@mixin smaller-than sm {
+  .chapter {
+    height: auto;
+    overflow: visible;
+    opacity: 1; /* Always visible on mobile — no pin, no GSAP reveal */
+  }
+
+  /* Macro label + progress bar flow with content on mobile */
+  .macroLabel {
+    position: relative;
+    top: auto;
+    left: auto;
+    display: block;
+    padding: var(--mantine-spacing-md) var(--mantine-spacing-md) 0;
+  }
+
+  .progressBar {
+    position: relative;
+    top: auto;
+    left: auto;
+    right: auto;
+    padding: var(--mantine-spacing-xs) var(--mantine-spacing-md);
+  }
+
+  .spotlights {
+    position: relative;
+    inset: auto;
+  }
+
+  .divisionEntries {
+    display: none;
+  }
+
+}

@@ -1,0 +1,239 @@
+.root {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  opacity: 0;
+  pointer-events: none;
+  /* GPU layer promotion — GSAP animates opacity/transform on these elements.
+     will-change ensures the browser rasterizes SVG content once and composites
+     on the GPU rather than re-rasterizing every scrub frame. */
+  will-change: transform, opacity;
+  contain: layout style;
+}
+
+/* Content block — left side on desktop.
+   max() ensures content always clears the ExperienceNav rail (~110px wide at left: 32px) */
+.content {
+  position: relative;
+  z-index: 2;
+  padding-left: max(150px, 12vw);
+  max-width: 50%;
+}
+
+.divisionName {
+  font-family: var(--mantine-font-family-headings);
+  font-weight: 800;
+  font-size: clamp(32px, 6vw, 80px);
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.12);
+  text-transform: uppercase;
+  line-height: 1;
+  margin-bottom: var(--mantine-spacing-md);
+}
+
+.badge {
+  letter-spacing: 0.2em;
+  margin-bottom: var(--mantine-spacing-sm);
+}
+
+.name {
+  font-family: var(--mantine-font-family-headings);
+  font-weight: 800;
+  font-size: clamp(36px, 7vw, 96px);
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+  color: #fff;
+  text-transform: uppercase;
+  margin-bottom: var(--mantine-spacing-xs);
+}
+
+.record {
+  font-family: var(--mantine-font-family-headings);
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 0.15em;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: var(--mantine-spacing-lg);
+}
+
+/* 2x2 Stats Grid */
+.statsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px 40px;
+  margin-bottom: var(--mantine-spacing-xl);
+  max-width: 460px;
+}
+
+.statItem {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+/* CSS ring — conic-gradient with mask cutout. No SVG, fully GPU-composited. */
+.statRingWrapper {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+}
+
+.statRing {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: conic-gradient(
+    var(--mantine-color-ufcRed-6) 0% var(--ring-pct),
+    rgba(255, 255, 255, 0.08) var(--ring-pct) 100%
+  );
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 5px), black calc(100% - 5px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 5px), black calc(100% - 5px));
+}
+
+.statRingValue {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mantine-font-family-headings);
+  font-weight: 800;
+  font-size: 11px;
+  color: #fff;
+  line-height: 1;
+}
+
+.statLabels {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.statLabel {
+  font-family: var(--mantine-font-family-headings);
+  font-weight: 800;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: rgba(255, 255, 255, 0.35);
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+
+.statSubLabel {
+  font-family: var(--mantine-font-family-headings);
+  font-weight: 700;
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  color: rgba(255, 255, 255, 0.2);
+  text-transform: uppercase;
+}
+
+.fighterWeight {
+  font-family: var(--mantine-font-family-headings);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.55);
+  margin: 0 0 4px;
+  text-transform: uppercase;
+}
+
+.country {
+  font-size: 14px;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.45);
+  text-transform: uppercase;
+}
+
+/* Photo block — starts below progress bar (52px top + 40px label padding + 4px buffer) */
+.photo {
+  position: absolute;
+  top: 96px;
+  bottom: 0;
+  height: auto;
+  width: 55%;
+  overflow: hidden;
+}
+
+.photoRight { right: 0; }
+.photoLeft  { left: 0; }
+
+.photoImg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: bottom center;
+}
+
+/* Gradient blends photo into black content area */
+.photoGradientRight {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, #000 0%, transparent 40%);
+}
+
+.photoGradientLeft {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to left, #000 0%, transparent 40%);
+}
+
+/* Women's: content shifts to right side */
+.contentRight {
+  margin-left: auto;
+  padding-left: 0;
+  padding-right: max(150px, 12vw);
+}
+
+/* ─── Mobile ─────────────────────────────────────────────── */
+@mixin smaller-than sm {
+  .root {
+    position: relative;
+    inset: auto;
+    opacity: 1;
+    pointer-events: auto;
+    flex-direction: column;
+    align-items: stretch;
+    padding-bottom: 60px;
+  }
+
+  /* Photo stacks on top, full width */
+  .photo {
+    position: relative;
+    top: auto;
+    width: 100%;
+    height: 50vw;
+    min-height: 240px;
+  }
+
+  .photoRight,
+  .photoLeft {
+    right: auto;
+    left: auto;
+  }
+
+  /* Gradient fades to bottom on mobile (photo is above content) */
+  .photoGradientRight,
+  .photoGradientLeft {
+    background: linear-gradient(to bottom, transparent 50%, #000 100%);
+  }
+
+  /* Content takes full width below photo */
+  .content,
+  .contentRight {
+    max-width: 100%;
+    padding: var(--mantine-spacing-xl) var(--mantine-spacing-md);
+    margin-left: 0;
+  }
+
+  .divisionName {
+    font-size: clamp(28px, 8vw, 48px);
+  }
+
+  .name {
+    font-size: clamp(32px, 10vw, 56px);
+  }
+}
