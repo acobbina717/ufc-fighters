@@ -194,6 +194,7 @@ const DivisionsChapter = forwardRef<DivisionsChapterHandle, Props>(function Divi
         if (split) gsap.set(split.chars, { yPercent: 115 })
       })
 
+      let needsScrubSnap = true
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: chapterRef.current,
@@ -206,11 +207,14 @@ const DivisionsChapter = forwardRef<DivisionsChapterHandle, Props>(function Divi
           onRefresh: (self) => {
             stStartRef.current = self.start
             onScrollReady?.(self.start)
+            if (needsScrubSnap && self.progress > 0) {
+              needsScrubSnap = false
+              const scrubTween = self.getTween()
+              if (scrubTween) scrubTween.progress(1, true)
+            }
           },
         },
       })
-      // Don't read tl.scrollTrigger.start here — it's 0 before the first
-      // refresh cycle. The onRefresh callback above fires with the real value.
 
       // Animate each beat in/out
       beats.forEach((beat, i) => {
@@ -253,16 +257,6 @@ const DivisionsChapter = forwardRef<DivisionsChapterHandle, Props>(function Divi
 
       // Sentinel tween to set total timeline duration
       tl.to({}, {}, totalUnits)
-
-      // On mid-scroll rebuild, the scrub tween starts at 0 and smoothly
-      // catches up over 1.5s — causing garbled SplitText in the interim.
-      // Force-complete the scrub so the timeline instantly reflects the
-      // current scroll position.
-      const st = tl.scrollTrigger
-      if (st && st.progress > 0) {
-        const scrubTween = st.getTween()
-        if (scrubTween) scrubTween.progress(1, true)
-      }
 
       return () => {
         divisionSplits.forEach(split => split?.revert())

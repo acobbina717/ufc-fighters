@@ -4,8 +4,8 @@
 import { useRef } from 'react'
 import { useMantineTheme } from '@mantine/core'
 import { useMediaQuery, useReducedMotion } from '@mantine/hooks'
-import { useQuery } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
+import { useStableQuery } from '#/hooks/useStableQuery'
 import { gsap, SplitText, useGSAP } from '#/lib/gsap'
 import classes from './HeroChapter.module.css'
 
@@ -20,7 +20,7 @@ export default function HeroChapter() {
   const prefersReduced = useReducedMotion()
   const theme = useMantineTheme()
   const isMobile = useMediaQuery(`(max-width: calc(${theme.breakpoints.sm} - 0.0625em))`)
-  const featuredFighter = useQuery(api.fighters.getFeaturedFighter)
+  const featuredFighter = useStableQuery(api.fighters.getFeaturedFighter, {})
 
   useGSAP(() => {
     if (prefersReduced) {

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
-import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import { useStableQuery } from "#/hooks/useStableQuery";
 import { gsap, useGSAP, SplitText } from "#/lib/gsap";
 import { MENS_DIVISIONS, WOMENS_DIVISIONS } from "#/lib/weightClasses";
 import { Badge, ScrollArea, UnstyledButton } from "@mantine/core";
@@ -21,7 +21,7 @@ export default function DivisionPanel({
   const [activeDivision, setActiveDivision] = useState(defaultDivision);
   const weightClass = activeDivision.replace(/^(mens|womens)-/, "");
 
-  const fighters = useQuery(api.fighters.getByWeightClass, {
+  const fighters = useStableQuery(api.fighters.getByWeightClass, {
     weightClass,
     division: gender,
   });
