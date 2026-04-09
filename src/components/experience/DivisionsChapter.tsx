@@ -201,7 +201,8 @@ const DivisionsChapter = forwardRef<DivisionsChapterHandle, Props>(function Divi
           start: 'top top',
           end: scrollEnd,
           pin: true,
-          scrub: 1.5,
+          scrub: 0.8,
+          fastScrollEnd: true,
           anticipatePin: 1,
           invalidateOnRefresh: true,
           onRefresh: (self) => {
