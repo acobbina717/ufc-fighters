@@ -6,7 +6,7 @@ import { useStableQuery } from '#/hooks/useStableQuery'
 import { Center, Loader, useMantineTheme } from '@mantine/core'
 import { useReducedMotion, useWindowScroll } from '@mantine/hooks'
 import { api } from '../../../convex/_generated/api'
-import { gsap, ScrollTrigger, SplitText, useGSAP } from '#/lib/gsap'
+import { gsap, SplitText, useGSAP, scheduleScrollTriggerRefresh } from '#/lib/gsap'
 import { MENS_DIVISIONS, WOMENS_DIVISIONS } from '#/lib/weightClasses'
 import type { Doc } from '../../../convex/_generated/dataModel'
 import { useStaleSync } from '#/hooks/useStaleSync'
@@ -134,7 +134,7 @@ const DivisionsChapter = forwardRef<DivisionsChapterHandle, Props>(function Divi
   useEffect(() => {
     if (!allLoaded) return
     requestAnimationFrame(() => {
-      ScrollTrigger.refresh()
+      scheduleScrollTriggerRefresh()
       if (chapterRef.current) {
         chapterRef.current.style.opacity = '1'
       }
@@ -194,7 +194,6 @@ const DivisionsChapter = forwardRef<DivisionsChapterHandle, Props>(function Divi
         if (split) gsap.set(split.chars, { yPercent: 115 })
       })
 
-      let needsScrubSnap = true
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: chapterRef.current,
@@ -208,11 +207,6 @@ const DivisionsChapter = forwardRef<DivisionsChapterHandle, Props>(function Divi
           onRefresh: (self) => {
             stStartRef.current = self.start
             onScrollReady?.(self.start)
-            if (needsScrubSnap && self.progress > 0) {
-              needsScrubSnap = false
-              const scrubTween = self.getTween()
-              if (scrubTween) scrubTween.progress(1, true)
-            }
           },
         },
       })
@@ -269,7 +263,7 @@ const DivisionsChapter = forwardRef<DivisionsChapterHandle, Props>(function Divi
     // No ScrollTrigger per-card — too many triggers on a long list causes performance issues.
 
     return () => mm.revert()
-  }, { scope: chapterRef, dependencies: [beatsFingerprint, prefersReduced] })
+  }, { scope: chapterRef, dependencies: [beatsFingerprint, prefersReduced], revertOnUpdate: true })
 
   return (
     <section ref={chapterRef} className={classes.chapter}>

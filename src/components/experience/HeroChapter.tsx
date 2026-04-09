@@ -84,7 +84,7 @@ export default function HeroChapter() {
     })
 
     return () => mm.revert()
-  }, { scope: heroRef, dependencies: [prefersReduced, isMobile] })
+  }, { scope: heroRef, dependencies: [prefersReduced, isMobile], revertOnUpdate: true })
 
   return (
     <section ref={heroRef} className={classes.hero} aria-label="UFC Fighter Rankings">

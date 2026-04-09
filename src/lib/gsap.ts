@@ -8,4 +8,15 @@ import { Flip } from 'gsap/Flip'
 
 gsap.registerPlugin(useGSAP, ScrollTrigger, SplitText, Flip)
 
+/** Coalesce ScrollTrigger.refresh() to one call per animation frame (e.g. multiple chapters loading). */
+let scrollTriggerRefreshRaf: number | null = null
+
+export function scheduleScrollTriggerRefresh(): void {
+  if (scrollTriggerRefreshRaf !== null) return
+  scrollTriggerRefreshRaf = requestAnimationFrame(() => {
+    scrollTriggerRefreshRaf = null
+    ScrollTrigger.refresh()
+  })
+}
+
 export { gsap, ScrollTrigger, SplitText, Flip, useGSAP }
