@@ -1,5 +1,5 @@
 // Root scroll container. Chapters render in order — Hero → Men's → Women's → End state.
-import { useRef, useState, useLayoutEffect } from 'react'
+import { useRef, useState, useCallback, useLayoutEffect } from 'react'
 import { useWindowScroll } from '@mantine/hooks'
 import classes from './ExperienceView.module.css'
 import HeroChapter from './HeroChapter'
@@ -16,6 +16,13 @@ export default function ExperienceView() {
   const [mensScrollStart, setMensScrollStart] = useState<number | null>(null)
   const [womensScrollStart, setWomensScrollStart] = useState<number | null>(null)
 
+  const handleMensScrollReady = useCallback((start: number) => {
+    if (start > 0) setMensScrollStart(start)
+  }, [])
+  const handleWomensScrollReady = useCallback((start: number) => {
+    if (start > 0) setWomensScrollStart(start)
+  }, [])
+
   useLayoutEffect(() => {
     // Runs before paint — prevents router scroll restoration from briefly revealing
     // chapters below the fold before the hero chapter is visible.
@@ -30,12 +37,12 @@ export default function ExperienceView() {
       <DivisionsChapter
         ref={mensRef}
         gender="mens"
-        onScrollReady={setMensScrollStart}
+        onScrollReady={handleMensScrollReady}
       />
       <DivisionsChapter
         ref={womensRef}
         gender="womens"
-        onScrollReady={setWomensScrollStart}
+        onScrollReady={handleWomensScrollReady}
       />
       <ExperienceEndState />
       <BackToTopChevron />

@@ -2,7 +2,7 @@
 // Loads all fighters upfront (9 fixed hooks, skip unused), builds a flat beats array,
 // then drives a single scrubbed GSAP timeline. 8 units per division × 50vh per unit.
 import { useRef, useMemo, useEffect, useImperativeHandle, forwardRef } from 'react'
-import { useQuery } from 'convex/react'
+import { useStableQuery } from '#/hooks/useStableQuery'
 import { Center, Loader, useMantineTheme } from '@mantine/core'
 import { useReducedMotion, useWindowScroll } from '@mantine/hooks'
 import { api } from '../../../convex/_generated/api'
@@ -57,15 +57,15 @@ const DivisionsChapter = forwardRef<DivisionsChapterHandle, Props>(function Divi
   // Strip the gender prefix — DB stores 'heavyweight', not 'mens-heavyweight'.
   const d = divisions
   const wc = (i: number) => d[i]?.key.replace(/^(mens|womens)-/, '')
-  const f0 = useQuery(api.fighters.getByWeightClass, d[0] ? { weightClass: wc(0)!, division: gender } : 'skip')
-  const f1 = useQuery(api.fighters.getByWeightClass, d[1] ? { weightClass: wc(1)!, division: gender } : 'skip')
-  const f2 = useQuery(api.fighters.getByWeightClass, d[2] ? { weightClass: wc(2)!, division: gender } : 'skip')
-  const f3 = useQuery(api.fighters.getByWeightClass, d[3] ? { weightClass: wc(3)!, division: gender } : 'skip')
-  const f4 = useQuery(api.fighters.getByWeightClass, d[4] ? { weightClass: wc(4)!, division: gender } : 'skip')
-  const f5 = useQuery(api.fighters.getByWeightClass, d[5] ? { weightClass: wc(5)!, division: gender } : 'skip')
-  const f6 = useQuery(api.fighters.getByWeightClass, d[6] ? { weightClass: wc(6)!, division: gender } : 'skip')
-  const f7 = useQuery(api.fighters.getByWeightClass, d[7] ? { weightClass: wc(7)!, division: gender } : 'skip')
-  const f8 = useQuery(api.fighters.getByWeightClass, d[8] ? { weightClass: wc(8)!, division: gender } : 'skip')
+  const f0 = useStableQuery(api.fighters.getByWeightClass, d[0] ? { weightClass: wc(0)!, division: gender } : 'skip')
+  const f1 = useStableQuery(api.fighters.getByWeightClass, d[1] ? { weightClass: wc(1)!, division: gender } : 'skip')
+  const f2 = useStableQuery(api.fighters.getByWeightClass, d[2] ? { weightClass: wc(2)!, division: gender } : 'skip')
+  const f3 = useStableQuery(api.fighters.getByWeightClass, d[3] ? { weightClass: wc(3)!, division: gender } : 'skip')
+  const f4 = useStableQuery(api.fighters.getByWeightClass, d[4] ? { weightClass: wc(4)!, division: gender } : 'skip')
+  const f5 = useStableQuery(api.fighters.getByWeightClass, d[5] ? { weightClass: wc(5)!, division: gender } : 'skip')
+  const f6 = useStableQuery(api.fighters.getByWeightClass, d[6] ? { weightClass: wc(6)!, division: gender } : 'skip')
+  const f7 = useStableQuery(api.fighters.getByWeightClass, d[7] ? { weightClass: wc(7)!, division: gender } : 'skip')
+  const f8 = useStableQuery(api.fighters.getByWeightClass, d[8] ? { weightClass: wc(8)!, division: gender } : 'skip')
 
   const allFightersData = useMemo(() => [f0, f1, f2, f3, f4, f5, f6, f7, f8].slice(0, divisions.length), [f0, f1, f2, f3, f4, f5, f6, f7, f8, divisions.length])
   const allLoaded = allFightersData.every(f => f !== undefined)
@@ -141,6 +141,13 @@ const DivisionsChapter = forwardRef<DivisionsChapterHandle, Props>(function Divi
     })
   }, [allLoaded])
 
+  // Structural fingerprint: only changes when fighter IDs or ranks change,
+  // NOT on reference-identity shifts from WebSocket resubscription.
+  const beatsFingerprint = useMemo(
+    () => beats.map(b => `${b.fighter._id}:${b.rank}`).join('|'),
+    [beats],
+  )
+
   // Calculate actual divisions that have data to avoid "dead air"
   const activeDivisionIndices = useMemo(() => {
     const indices = new Set<number>()
@@ -202,9 +209,8 @@ const DivisionsChapter = forwardRef<DivisionsChapterHandle, Props>(function Divi
           },
         },
       })
-      // Capture start immediately after creation
-      stStartRef.current = tl.scrollTrigger?.start ?? 0
-      onScrollReady?.(stStartRef.current)
+      // Don't read tl.scrollTrigger.start here — it's 0 before the first
+      // refresh cycle. The onRefresh callback above fires with the real value.
 
       // Animate each beat in/out
       beats.forEach((beat, i) => {
@@ -248,6 +254,16 @@ const DivisionsChapter = forwardRef<DivisionsChapterHandle, Props>(function Divi
       // Sentinel tween to set total timeline duration
       tl.to({}, {}, totalUnits)
 
+      // On mid-scroll rebuild, the scrub tween starts at 0 and smoothly
+      // catches up over 1.5s — causing garbled SplitText in the interim.
+      // Force-complete the scrub so the timeline instantly reflects the
+      // current scroll position.
+      const st = tl.scrollTrigger
+      if (st && st.progress > 0) {
+        const scrubTween = st.getTween()
+        if (scrubTween) scrubTween.progress(1, true)
+      }
+
       return () => {
         divisionSplits.forEach(split => split?.revert())
         tl.scrollTrigger?.kill()
@@ -258,7 +274,7 @@ const DivisionsChapter = forwardRef<DivisionsChapterHandle, Props>(function Divi
     // No ScrollTrigger per-card — too many triggers on a long list causes performance issues.
 
     return () => mm.revert()
-  }, { scope: chapterRef, dependencies: [beats.length, prefersReduced] })
+  }, { scope: chapterRef, dependencies: [beatsFingerprint, prefersReduced] })
 
   return (
     <section ref={chapterRef} className={classes.chapter}>
