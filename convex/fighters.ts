@@ -27,6 +27,23 @@ export const getByWeightClass = query({
   },
 })
 
+export const getChampionsByGender = query({
+  args: {
+    division: v.union(v.literal('mens'), v.literal('womens')),
+  },
+  handler: async (ctx, { division }) => {
+    const fighters = await ctx.db
+      .query('fighters')
+      .filter((q) => q.and(
+        q.eq(q.field('division'), division),
+        q.eq(q.field('ranking'), 0),
+        q.eq(q.field('isActive'), true)
+      ))
+      .collect()
+    return fighters
+  },
+})
+
 export const upsertFighter = mutation({
   args: {
     name: v.string(),

@@ -21,7 +21,7 @@
   top: 10px;
   left: 10px;
   z-index: 2;
-  background: var(--mantine-color-dark-9);
+  background: light-dark(var(--mantine-color-dark-4), var(--mantine-color-dark-9));
   color: #fff;
   font-family: var(--mantine-font-family-headings);
   font-weight: 800;

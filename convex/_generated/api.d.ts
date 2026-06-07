@@ -9,7 +9,6 @@
  */
 
 import type * as fighters from "../fighters.js";
-import type * as http from "../http.js";
 import type * as scrape from "../scrape.js";
 import type * as videoGenerate from "../videoGenerate.js";
 
@@ -21,7 +20,6 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   fighters: typeof fighters;
-  http: typeof http;
   scrape: typeof scrape;
   videoGenerate: typeof videoGenerate;
 }>;

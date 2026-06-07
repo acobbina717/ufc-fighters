@@ -1,5 +1,5 @@
-// abbr added in Phase 3 for the DivisionProgressBar track labels.
-// Men's Strawweight + Women's Featherweight added to complete all 13 UFC divisions.
+export type Gender = 'mens' | 'womens'
+
 export interface WeightClassDef {
   key: string
   label: string

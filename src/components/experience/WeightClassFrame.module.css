@@ -1,0 +1,86 @@
+.root {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  /* Sync with WeightClassGrid.module.css */
+  --grid-gap: 10px;
+  --gap-half: calc(var(--grid-gap) / 2);
+}
+
+/* Central Backbone */
+.spine {
+  position: absolute;
+  top: 0;
+  bottom: calc(var(--curve-r) + 4px);
+  left: 50%;
+  margin-left: -4px;
+  width: 8px;
+  background: var(--frame-color);
+}
+
+/* Row-based sprout container */
+.rowFrame {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  /* Sync with card width math in grid */
+  height: calc((100cqw - var(--grid-gap)) / 2 * (3 / 4));
+  margin-bottom: 0;
+  pointer-events: none;
+}
+
+/* Individual Sprout */
+.sprout {
+  position: relative;
+  width: calc((100cqw - var(--grid-gap)) / 2);
+  height: 100%;
+}
+
+.sproutLeft {
+  margin-right: var(--gap-half);
+}
+
+.sproutRight {
+  margin-left: var(--gap-half);
+}
+
+/* Arc SVG */
+.arcSvg {
+  position: absolute;
+  bottom: 4px;
+  width: var(--curve-r);
+  height: var(--curve-r);
+  overflow: visible;
+}
+
+.sproutLeft .arcSvg {
+  right: calc(-1 * var(--gap-half));
+}
+
+.sproutRight .arcSvg {
+  left: calc(-1 * var(--gap-half));
+}
+
+/* Bottom horizontal rail */
+.bottomBar {
+  position: absolute;
+  bottom: 0;
+  height: 8px;
+  width: calc(100% - var(--curve-r) + var(--gap-half));
+  background: var(--frame-color);
+}
+
+.sproutLeft .bottomBar {
+  left: 0;
+}
+
+.sproutRight .bottomBar {
+  right: 0;
+}
+
+@media (max-width: 48em) {
+  .root {
+    display: none;
+  }
+}

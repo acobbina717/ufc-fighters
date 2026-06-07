@@ -13,6 +13,7 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppMatchupIndexRouteImport } from './routes/_app/matchup/index'
 import { Route as AppFightersIndexRouteImport } from './routes/_app/fighters/index'
+import { Route as DivisionsGenderWeightClassRouteImport } from './routes/divisions.$gender.$weightClass'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -33,14 +34,22 @@ const AppFightersIndexRoute = AppFightersIndexRouteImport.update({
   path: '/fighters/',
   getParentRoute: () => AppRoute,
 } as any)
+const DivisionsGenderWeightClassRoute =
+  DivisionsGenderWeightClassRouteImport.update({
+    id: '/divisions/$gender/$weightClass',
+    path: '/divisions/$gender/$weightClass',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/divisions/$gender/$weightClass': typeof DivisionsGenderWeightClassRoute
   '/fighters/': typeof AppFightersIndexRoute
   '/matchup/': typeof AppMatchupIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/divisions/$gender/$weightClass': typeof DivisionsGenderWeightClassRoute
   '/fighters': typeof AppFightersIndexRoute
   '/matchup': typeof AppMatchupIndexRoute
 }
@@ -48,20 +57,32 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
+  '/divisions/$gender/$weightClass': typeof DivisionsGenderWeightClassRoute
   '/_app/fighters/': typeof AppFightersIndexRoute
   '/_app/matchup/': typeof AppMatchupIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/fighters/' | '/matchup/'
+  fullPaths:
+    | '/'
+    | '/divisions/$gender/$weightClass'
+    | '/fighters/'
+    | '/matchup/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/fighters' | '/matchup'
-  id: '__root__' | '/' | '/_app' | '/_app/fighters/' | '/_app/matchup/'
+  to: '/' | '/divisions/$gender/$weightClass' | '/fighters' | '/matchup'
+  id:
+    | '__root__'
+    | '/'
+    | '/_app'
+    | '/divisions/$gender/$weightClass'
+    | '/_app/fighters/'
+    | '/_app/matchup/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
+  DivisionsGenderWeightClassRoute: typeof DivisionsGenderWeightClassRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -94,6 +115,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppFightersIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/divisions/$gender/$weightClass': {
+      id: '/divisions/$gender/$weightClass'
+      path: '/divisions/$gender/$weightClass'
+      fullPath: '/divisions/$gender/$weightClass'
+      preLoaderRoute: typeof DivisionsGenderWeightClassRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -112,6 +140,7 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
+  DivisionsGenderWeightClassRoute: DivisionsGenderWeightClassRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

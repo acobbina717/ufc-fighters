@@ -2,8 +2,9 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  background: var(--mantine-color-dark-9);
+  background-color: light-dark(var(--mantine-color-white), var(--mantine-color-dark-9));
   border-bottom: 3px solid var(--mantine-primary-color-6);
+  transition: background-color 0.2s ease;
 }
 
 .nav {
@@ -37,7 +38,7 @@
   font-family: var(--mantine-font-family-headings);
   font-weight: 700;
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.5);
+  color: light-dark(rgba(0, 0, 0, 0.45), rgba(255, 255, 255, 0.5));
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -45,7 +46,8 @@
 .navLinks {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 12px;
+  margin-left: auto;
 }
 
 .navLink {
@@ -55,18 +57,26 @@
   font-size: 14px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.65);
+  color: light-dark(rgba(0, 0, 0, 0.65), rgba(255, 255, 255, 0.65));
   text-decoration: none;
   border-radius: var(--mantine-radius-xs);
   transition: color 0.2s, background 0.2s;
 }
 
 .navLink:hover {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.08);
+  color: light-dark(#000, #fff);
+  background: light-dark(rgba(0, 0, 0, 0.05), rgba(255, 255, 255, 0.08));
 }
 
 .navLink[data-active='true'] {
   color: #fff;
   background: var(--mantine-primary-color-6);
+}
+
+.themeToggle {
+  color: light-dark(var(--mantine-color-black), var(--mantine-color-white));
+}
+
+.icon {
+  display: block;
 }

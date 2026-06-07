@@ -3,11 +3,12 @@
   height: 100svh;
   background:
     radial-gradient(ellipse at 15% 65%, rgba(210, 10, 10, 0.18) 0%, transparent 50%),
-    #000;
+    light-dark(#fff, #000);
   overflow: hidden;
+  transition: background 0.3s ease;
 }
 
-/* Fighter silhouette — right-anchored, desaturated, fades left into the glow */
+/* Fighter silhouette — desaturated, fades into the background */
 .silhouette {
   position: absolute;
   right: 0;
@@ -24,11 +25,11 @@
   height: 100%;
   object-fit: contain;
   object-position: bottom right;
-  filter: grayscale(1) contrast(1.25) brightness(0.5);
-  mix-blend-mode: luminosity;
+  filter: grayscale(1) contrast(1.25) brightness(light-dark(0.9, 0.5));
+  mix-blend-mode: light-dark(multiply, luminosity);
 }
 
-/* Vertical press pass — left edge, opposite the scroll hint */
+/* Vertical press pass */
 .pressPass {
   position: absolute;
   left: 32px;
@@ -42,7 +43,6 @@
   gap: 14px;
 }
 
-/* "UPCOMING" watermark runs vertically behind the event info */
 .pressPass::before {
   content: 'UPCOMING';
   writing-mode: vertical-rl;
@@ -51,7 +51,7 @@
   font-weight: 800;
   font-size: 58px;
   letter-spacing: 0.12em;
-  color: rgba(255, 255, 255, 0.05);
+  color: light-dark(rgba(0, 0, 0, 0.05), rgba(255, 255, 255, 0.05));
   text-transform: uppercase;
   user-select: none;
   flex-shrink: 0;
@@ -77,7 +77,7 @@
   font-weight: 800;
   font-size: 18px;
   letter-spacing: 0.22em;
-  color: rgba(255, 255, 255, 0.82);
+  color: light-dark(rgba(0, 0, 0, 0.82), rgba(255, 255, 255, 0.82));
   text-transform: uppercase;
 }
 
@@ -86,7 +86,7 @@
   font-weight: 700;
   font-size: 11px;
   letter-spacing: 0.18em;
-  color: rgba(255, 255, 255, 0.5);
+  color: light-dark(rgba(0, 0, 0, 0.5), rgba(255, 255, 255, 0.5));
   text-transform: uppercase;
 }
 
@@ -98,7 +98,7 @@
   font-weight: 700;
   font-size: 11px;
   letter-spacing: 0.28em;
-  color: rgba(255, 255, 255, 0.4);
+  color: light-dark(rgba(0, 0, 0, 0.4), rgba(255, 255, 255, 0.4));
   text-transform: uppercase;
 }
 
@@ -117,7 +117,7 @@
   50%       { opacity: 0.7; box-shadow: 0 0 0 5px rgba(210, 10, 10, 0); }
 }
 
-/* Red slash — CSS rotate on wrapper, GSAP scaleX on inner */
+/* Red slash */
 .slashWrapper {
   position: absolute;
   top: 46%;
@@ -132,7 +132,6 @@
   height: 100%;
   background: var(--mantine-color-ufcRed-6);
   box-shadow: 0 0 40px color-mix(in srgb, var(--mantine-color-ufcRed-6) 45%, transparent);
-  /* Initial state: hidden until GSAP animates scaleX to 1 */
   transform: scaleX(0);
   transform-origin: left center;
 }
@@ -153,7 +152,6 @@
   color: var(--mantine-color-ufcRed-6);
   margin: 0 0 16px;
   text-transform: uppercase;
-  /* Initial state: hidden until GSAP reveals */
   opacity: 0;
 }
 
@@ -163,11 +161,10 @@
   font-size: clamp(64px, 12vw, 160px);
   line-height: 0.88;
   letter-spacing: -0.025em;
-  color: #fff;
+  color: light-dark(#000, #fff);
   text-transform: uppercase;
   margin: 0 0 20px;
   overflow: hidden;
-  /* Initial state: hidden until GSAP/SplitText reveals chars */
   opacity: 0;
 }
 
@@ -176,10 +173,9 @@
   font-weight: 700;
   font-size: 14px;
   letter-spacing: 0.3em;
-  color: rgba(255, 255, 255, 0.4);
+  color: light-dark(rgba(0, 0, 0, 0.4), rgba(255, 255, 255, 0.4));
   margin: 0;
   text-transform: uppercase;
-  /* Initial state: hidden until GSAP reveals */
   opacity: 0;
 }
 
@@ -198,7 +194,7 @@
 .scrollLabel {
   font-size: 10px;
   letter-spacing: 0.5em;
-  color: rgba(255, 255, 255, 0.35);
+  color: light-dark(rgba(0, 0, 0, 0.35), rgba(255, 255, 255, 0.35));
   font-family: var(--mantine-font-family-headings);
   font-weight: 700;
   text-transform: uppercase;

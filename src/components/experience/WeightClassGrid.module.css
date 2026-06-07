@@ -1,0 +1,34 @@
+.container {
+  position: relative;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 var(--mantine-spacing-md);
+  /* Container query root: cqw here = 1% of grid width, letting --curve-r drive both the card
+     arcs and the spine's bottom cutoff from a single source. */
+  container-type: inline-size;
+  /* Frame material — SOLID color (not rgba). Overlapping strokes would double-stack alpha and
+     create a bright junction where the arc meets the spine. A solid color composites once over
+     the page bg, so arc-over-spine = spine alone = one fused piece of metal.
+     Value ≈ visual equivalent of rgba(255,255,255,0.25) over --mantine-color-dark-7. */
+  --frame-color: #626262;
+  /* Corner arc radius. 9.375cqw ≈ 18.75% of card width (cards take ~half grid width post-gap),
+     matching the 4:3 clipPath arc. Clamped so the curve stays readable on tight layouts. */
+  --curve-r: clamp(56px, 9.375cqw, 120px);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  column-gap: 10px;
+  row-gap: 0;
+  padding-bottom: 0;
+  position: relative;
+  z-index: 5; /* Sit above the Frame skeleton but below interaction layers */
+}
+
+@media (max-width: 48em) {
+  .grid {
+    grid-template-columns: 1fr;
+    gap: var(--mantine-spacing-md);
+  }
+}

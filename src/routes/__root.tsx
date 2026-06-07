@@ -77,11 +77,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" {...mantineHtmlProps}>
       <head>
-        <ColorSchemeScript forceColorScheme="dark" />
+        <ColorSchemeScript defaultColorScheme="light" />
         <HeadContent />
       </head>
       <body>
-        <MantineProvider theme={mantineTheme} forceColorScheme="dark">
+        <MantineProvider theme={mantineTheme} defaultColorScheme="light">
           <Notifications position="top-right" />
           <ConvexProvider>
             <TanStackQueryProvider>

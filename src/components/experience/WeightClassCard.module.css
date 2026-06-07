@@ -1,0 +1,169 @@
+.card {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: transparent;
+  z-index: 2;
+  --border-gradient-stops: white, rgba(255, 255, 255, 0.15), white;
+}
+
+.linkLayer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  cursor: pointer;
+  z-index: 10;
+  /* clip-path applied inline from CLIP_PATHS — constrains hit area to the card shape */
+}
+
+.linkLayer:focus-visible {
+  outline: 2px solid var(--mantine-color-ufcRed-6);
+  outline-offset: -4px;
+}
+
+.imageWrapper {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-9));
+  pointer-events: none;
+}
+
+.borderSvg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.borderPath {
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  opacity: 0;
+  vector-effect: non-scaling-stroke;
+}
+
+.outlinePath {
+  fill: none;
+  stroke: var(--frame-color);
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  opacity: 1;
+  transform: scale(1);
+  transform-origin: center center;
+  transition:
+    transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+  filter: none;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: none;
+}
+
+.sheen {
+  position: absolute;
+  inset: -20%;
+  z-index: 2;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-140%) skewX(-12deg);
+  background: linear-gradient(
+    115deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.08) 44%,
+    rgba(255, 255, 255, 0.34) 50%,
+    rgba(255, 255, 255, 0.08) 56%,
+    transparent 65%
+  );
+  mix-blend-mode: screen;
+}
+
+.content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 4;
+  text-align: center;
+  padding: 20px;
+  transform: translateY(10px);
+  transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+  pointer-events: none;
+}
+
+.title {
+  font-family: var(--mantine-font-family-headings);
+  font-weight: 800;
+  font-size: clamp(24px, 4vw, 48px);
+  letter-spacing: 0.1em;
+  color: light-dark(#000, #fff);
+  text-transform: uppercase;
+  margin: 0;
+  text-shadow: light-dark(none, 0 4px 12px rgba(0, 0, 0, 0.5));
+}
+
+@media (hover: hover) {
+  /* Hover states driven by the interactive Link layer, using :has() to reach siblings */
+  /* Scale is applied to .image, not .imageWrapper, so the clip-path frame stays fixed */
+  .card:has(.linkLayer:hover) .image {
+    transform: scale(1.08);
+  }
+
+  .card:has(.linkLayer:hover) .content {
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 48em) {
+  .card {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    border-radius: 8px;
+    overflow: hidden;
+    clip-path: none !important;
+  }
+
+  .card > svg {
+    display: none;
+  }
+
+  .linkLayer {
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+    clip-path: none !important;
+  }
+
+  .imageWrapper {
+    clip-path: none !important;
+    border-radius: 8px;
+  }
+
+  .card:has(.linkLayer:hover) .image {
+    transform: scale(1);
+  }
+}
