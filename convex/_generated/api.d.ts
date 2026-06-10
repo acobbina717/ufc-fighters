@@ -8,7 +8,10 @@
  * @module
  */
 
+import type * as crons from "../crons.js";
+import type * as events from "../events.js";
 import type * as fighters from "../fighters.js";
+import type * as lib_eventParse from "../lib/eventParse.js";
 import type * as scrape from "../scrape.js";
 import type * as videoGenerate from "../videoGenerate.js";
 
@@ -19,7 +22,10 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  crons: typeof crons;
+  events: typeof events;
   fighters: typeof fighters;
+  "lib/eventParse": typeof lib_eventParse;
   scrape: typeof scrape;
   videoGenerate: typeof videoGenerate;
 }>;

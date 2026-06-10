@@ -1,6 +1,6 @@
 .container {
   position: relative;
-  max-width: 1400px;
+  max-width: 1000px;
   margin: 0 auto;
   padding: 0 var(--mantine-spacing-md);
   container-type: inline-size;
@@ -25,9 +25,9 @@
   grid-template-rows: 1fr 2fr 1fr;
   aspect-ratio: 4 / 3;
   grid-template-areas:
-    'hw hw mw  mw  mw  ww  ww  ww  lhw lhw'
-    'hw hw lw  lw  lw  lw  lw  lw  lhw lhw'
-    'hw hw fw  fw  bw  bw  fly fly lhw lhw';
+    "hw hw mw  mw  mw  ww  ww  ww  lhw lhw"
+    "hw hw lw  lw  lw  lw  lw  lw  lhw lhw"
+    "hw hw fw  fw  bw  bw  fly fly lhw lhw";
 }
 
 /*
@@ -41,8 +41,8 @@
      (~1.6:1) and the BW/FW sentinels match the men's tall portrait proportions. */
   aspect-ratio: 8 / 5;
   grid-template-areas:
-    'bw stw stw fw'
-    'bw fly fly fw';
+    "bw stw stw fw"
+    "bw fly fly fw";
 }
 
 /* Below sm, the bento collapses to a single full-width column with no overflow. */

@@ -41,5 +41,17 @@ A CSS conic-gradient ring (not SVG) representing one of four fighter stats: Stri
 ### App Routes
 Standard routes under `/_app/` that include the site Header: Home (fighters list), Fighters, and Matchup pages.
 
+### Event
+A scheduled UFC event stored in the `events` table. Fields: name (e.g. "UFC 314"), date (Unix timestamp), venue, location, lastSynced. Indexed by date. Past events are kept indefinitely to power fight history. Scraped from `ufc.com/events` via a daily Convex cron — server-side, not client-triggered. All upcoming events (typically 2–4 months out) are stored, not just the next one.
+
+### Bout
+A single scheduled fight within an Event, stored in the `bouts` table. References `fighterAId` (always the known fighter) and optionally `fighterBId` (absent = TBA until opponent announced). Fields: eventId, weightClass, cardTier (main / prelim / early_prelim), boutOrder (1 = main event). Indexed by eventId, fighterAId, and fighterBId. Enables "NEXT FIGHT" badges and fight history per fighter without scanning all events.
+
+### Card Tier
+The broadcast tier of a Bout within an Event: `main` (PPV main card), `prelim` (ESPN prelims), or `early_prelim` (UFC Fight Pass). Determines display hierarchy on event cards.
+
+### Fighter Activity
+A fighter is considered active if they appear in the UFC rankings OR on an upcoming fight card. Activity is enforced structurally by the scraping strategy — we only store fighters with a live reason to be active. There is no stored `isActive` flag; presence in the database implies activity at last sync.
+
 ### Planned Features
 Fighter Search, Head-to-Head Comparison, Stats Deep-Dive, Fight History, Mobile Improvements. Project is personal but intended to grow in robustness over time.

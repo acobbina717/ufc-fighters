@@ -1,6 +1,9 @@
 import { action } from './_generated/server'
 import { v } from 'convex/values'
 import { api } from './_generated/api'
+import type { Id } from './_generated/dataModel'
+import type { ActionCtx } from './_generated/server'
+import { parseEventCard, parseEventListing } from './lib/eventParse'
 
 // Maps our division keys to the section title on ufc.com/rankings
 const RANKINGS_SECTION_TITLE: Record<string, { title: string; division: 'mens' | 'womens' }> = {
@@ -350,7 +353,6 @@ export const scrapeWeightClass = action({
           ufcUrl: ranked.ufcSlug,
           ufcStatsUrl,
           lastSynced: now,
-          isActive: true,
         })
       } else {
         // Patch only the fields that actually differ
@@ -398,6 +400,166 @@ export const refreshAllPhotos = action({
       } catch { /* skip failed fighters */ }
     }
     return { total: fighters.length, updated }
+  },
+})
+
+// ─── Event scraping ───────────────────────────────────────────────────────────
+
+// Turns a UFC athlete slug ("conor-mcgregor") into a display name. searchUfcStats
+// normalizes case/diacritics, so this is good enough to resolve their record.
+function slugToName(slug: string): string {
+  return slug
+    .split('-')
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ')
+}
+
+// Full-scrapes a fighter discovered on a fight card (not via rankings) and
+// inserts them with no ranking. Presence on a scheduled card is proof of
+// activity. Returns the new fighter's id, or null if the insert couldn't run.
+async function fullScrapeFighter(
+  ctx: ActionCtx,
+  slug: string,
+  weightClass: string,
+  division: 'mens' | 'womens'
+): Promise<Id<'fighters'> | null> {
+  const name = slugToName(slug)
+  const now = Date.now()
+
+  let photoUrl: string | undefined
+  try {
+    const res = await fetch(`https://www.ufc.com/athlete/${slug}`, {
+      headers: { 'User-Agent': UA, Accept: 'text/html' },
+    })
+    if (res.ok) {
+      const html = await res.text()
+      const fullBody = html.match(/src="(https?:\/\/ufc\.com\/images\/styles\/athlete_bio_full_body\/[^"]+)"/)
+      if (fullBody?.[1]) photoUrl = await downloadAndStorePhoto(ctx.storage, fullBody[1])
+    }
+  } catch { /* keep going without photo */ }
+
+  let wins = 0, losses = 0, draws = 0
+  let nickname: string | undefined
+  let weight: string | undefined
+  let ufcStatsUrl = `https://www.ufc.com/athlete/${slug}`
+  let stats: FighterStats = {
+    slpm: 0, strikingAccuracy: 0, sapm: 0, strikingDefense: 0,
+    takedownAvg: 0, takedownAccuracy: 0, takedownDefense: 0, submissionAvg: 0,
+  }
+
+  const searchResult = await searchUfcStats(name)
+  if (searchResult) {
+    ufcStatsUrl = searchResult.ufcStatsUrl
+    wins = searchResult.wins
+    losses = searchResult.losses
+    draws = searchResult.draws
+    nickname = searchResult.nickname || undefined
+    try {
+      const res = await fetch(searchResult.ufcStatsUrl, {
+        headers: { 'User-Agent': UA, Accept: 'text/html' },
+      })
+      if (res.ok) {
+        const parsed = parseDetailPage(await res.text())
+        stats = parsed.stats
+        if (parsed.nickname) nickname = parsed.nickname
+        if (parsed.weight) weight = parsed.weight
+      }
+    } catch (err) {
+      console.error(`Detail fetch failed for ${name}:`, err)
+    }
+  }
+
+  return await ctx.runMutation(api.fighters.upsertFighter, {
+    name,
+    nickname,
+    weightClass,
+    division,
+    record: { wins, losses, draws, noContests: 0 },
+    stats,
+    weight,
+    photoUrl,
+    ufcUrl: slug,
+    ufcStatsUrl,
+    lastSynced: now,
+  })
+}
+
+// Scrapes all upcoming UFC events and their full fight cards. Cron-triggered
+// (daily) — see convex/crons.ts. Idempotent: events are upserted by slug and
+// each event's bouts are fully replaced on every run.
+export const scrapeEvents = action({
+  args: {},
+  handler: async (ctx): Promise<{ events: number; bouts: number; fightersScraped: number }> => {
+    const now = Date.now()
+
+    const listRes = await fetch('https://www.ufc.com/events', {
+      headers: { 'User-Agent': UA, Accept: 'text/html' },
+    })
+    if (!listRes.ok) throw new Error(`Events fetch failed: ${listRes.status}`)
+    const upcoming = parseEventListing(await listRes.text())
+
+    // Resolve card slugs to existing fighter ids without pulling full documents.
+    const fighterRows = await ctx.runQuery(api.events.ufcUrlToId)
+    const idBySlug = new Map<string, Id<'fighters'>>(fighterRows.map((r) => [r.ufcUrl, r.id]))
+
+    let boutCount = 0, fightersScraped = 0
+
+    for (const ev of upcoming) {
+      const eventId = await ctx.runMutation(api.events.upsertEvent, {
+        slug: ev.slug,
+        name: ev.name,
+        date: ev.timestamp * 1000, // store ms to compare against Date.now()
+        venue: '',
+        location: '',
+        lastSynced: now,
+      })
+
+      let cardHtml: string
+      try {
+        const res = await fetch(`https://www.ufc.com/event/${ev.slug}`, {
+          headers: { 'User-Agent': UA, Accept: 'text/html' },
+        })
+        if (!res.ok) continue
+        cardHtml = await res.text()
+      } catch {
+        continue
+      }
+
+      const resolve = async (slug: string, weightClass: string, division: 'mens' | 'womens') => {
+        const cached = idBySlug.get(slug)
+        if (cached) return cached
+        const id = await fullScrapeFighter(ctx, slug, weightClass, division)
+        if (id) {
+          idBySlug.set(slug, id)
+          fightersScraped++
+        }
+        return id ?? undefined
+      }
+
+      const resolved = []
+      for (const b of parseEventCard(cardHtml)) {
+        const fighterAId = await resolve(b.fighterASlug, b.weightClass, b.division)
+        if (!fighterAId) continue // can't anchor a bout without the known fighter
+        const fighterBId = b.fighterBSlug
+          ? await resolve(b.fighterBSlug, b.weightClass, b.division)
+          : undefined
+        resolved.push({
+          fighterAId,
+          fighterBId,
+          weightClass: b.weightClass,
+          cardTier: b.cardTier,
+          boutOrder: b.boutOrder,
+        })
+      }
+
+      boutCount += await ctx.runMutation(api.events.replaceEventBouts, {
+        eventId,
+        bouts: resolved,
+      })
+    }
+
+    console.log(`scrapeEvents: ${upcoming.length} events, ${boutCount} bouts, ${fightersScraped} new fighters`)
+    return { events: upcoming.length, bouts: boutCount, fightersScraped }
   },
 })
 

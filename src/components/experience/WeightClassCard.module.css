@@ -27,11 +27,11 @@
  *  - tall sentinels show the full body+belt, anchored to the top (default crop, no zoom)
  *  - wide landscape bands centre the subject and zoom in so the black margins crop out
  */
-.card[data-format='tall'] .photo {
+.card[data-format="tall"] .photo {
   object-position: top center;
 }
 
-.card[data-format='wide'] .photo {
+.card[data-format="wide"] .photo {
   object-position: center top;
   transform-origin: top center;
   transform: scale(1.1);

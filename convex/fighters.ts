@@ -12,7 +12,6 @@ export const getByWeightClass = query({
       .withIndex('by_weight_class_division', (q) =>
         q.eq('weightClass', weightClass).eq('division', division)
       )
-      .filter((q) => q.eq(q.field('isActive'), true))
       .collect()
 
     // Sort: champion (ranking=0) first, then ranked (1-15), then unranked (no ranking)
@@ -36,8 +35,7 @@ export const getChampionsByGender = query({
       .query('fighters')
       .filter((q) => q.and(
         q.eq(q.field('division'), division),
-        q.eq(q.field('ranking'), 0),
-        q.eq(q.field('isActive'), true)
+        q.eq(q.field('ranking'), 0)
       ))
       .collect()
     return fighters
@@ -73,7 +71,6 @@ export const upsertFighter = mutation({
     ufcUrl: v.string(),
     ufcStatsUrl: v.string(),
     lastSynced: v.number(),
-    isActive: v.boolean(),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
@@ -163,7 +160,7 @@ export const patchFighter = mutation({
 export const getAllFighters = query({
   args: {},
   handler: async (ctx) => {
-    return ctx.db.query('fighters').filter((q) => q.eq(q.field('isActive'), true)).collect()
+    return ctx.db.query('fighters').collect()
   },
 })
 
@@ -181,17 +178,36 @@ export const setVideoUrl = mutation({
   },
 })
 
-// Returns the most iconic fighter with a photo for the hero silhouette.
-// Tries heavyweight champion first, falls back to lightweight champion.
+// Returns the fighter for the hero silhouette. Prefers the next event's
+// main-event fighter (when they have a photo), then falls back to the
+// heavyweight champion, then the lightweight champion.
 export const getFeaturedFighter = query({
   args: {},
   handler: async (ctx) => {
+    // Next event's main-event fighter takes priority when they have a photo.
+    const now = Date.now()
+    const nextEvent = await ctx.db
+      .query('events')
+      .withIndex('by_date', (q) => q.gt('date', now))
+      .order('asc')
+      .first()
+    if (nextEvent) {
+      const mainBout = await ctx.db
+        .query('bouts')
+        .withIndex('by_event', (q) => q.eq('eventId', nextEvent._id))
+        .filter((q) => q.eq(q.field('boutOrder'), 1))
+        .first()
+      if (mainBout) {
+        const headliner = await ctx.db.get(mainBout.fighterAId)
+        if (headliner?.photoUrl) return headliner
+      }
+    }
+
     const hw = await ctx.db
       .query('fighters')
       .withIndex('by_weight_class_ranking', (q) =>
         q.eq('weightClass', 'mens-heavyweight').eq('ranking', 0)
       )
-      .filter((q) => q.eq(q.field('isActive'), true))
       .first()
     if (hw?.photoUrl) return hw
 
@@ -200,9 +216,45 @@ export const getFeaturedFighter = query({
       .withIndex('by_weight_class_ranking', (q) =>
         q.eq('weightClass', 'mens-lightweight').eq('ranking', 0)
       )
-      .filter((q) => q.eq(q.field('isActive'), true))
       .first()
     return lw ?? null
+  },
+})
+
+// Returns a fighter's earliest upcoming bout, joined with its event and opponent.
+// A fighter can be in either corner, so both bout indexes are queried and unioned
+// (red/blue assignment isn't consistent). Opponent is null when the bout is TBA.
+export const getNextFightForFighter = query({
+  args: { fighterId: v.id('fighters') },
+  handler: async (ctx, { fighterId }) => {
+    const now = Date.now()
+
+    const asA = await ctx.db
+      .query('bouts')
+      .withIndex('by_fighter_a', (q) => q.eq('fighterAId', fighterId))
+      .collect()
+    const asB = await ctx.db
+      .query('bouts')
+      .withIndex('by_fighter_b', (q) => q.eq('fighterBId', fighterId))
+      .collect()
+
+    const upcoming = []
+    for (const bout of [...asA, ...asB]) {
+      const event = await ctx.db.get(bout.eventId)
+      if (event && event.date > now) upcoming.push({ bout, event })
+    }
+    if (upcoming.length === 0) return null
+
+    upcoming.sort((x, y) => x.event.date - y.event.date)
+    const { bout, event } = upcoming[0]
+
+    const opponentId = bout.fighterAId === fighterId ? bout.fighterBId : bout.fighterAId
+    const opponent = opponentId ? await ctx.db.get(opponentId) : null
+
+    return {
+      event: { name: event.name, date: event.date },
+      opponent,
+    }
   },
 })
 
