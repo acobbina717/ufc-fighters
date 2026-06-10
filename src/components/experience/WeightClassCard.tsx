@@ -1,266 +1,150 @@
-import { useId, useRef } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
-import type { Gender } from "#/lib/weightClasses";
-import classes from "./WeightClassCard.module.css";
-import { gsap, useGSAP } from "#/lib/gsap";
+import { useRef } from 'react'
+import { Card } from '@mantine/core'
+import { Link } from '@tanstack/react-router'
+import { formatWeightRange, type WeightClassDef } from '#/lib/weightClasses'
+import { gsap, useGSAP } from '#/lib/gsap'
+import classes from './WeightClassCard.module.css'
 
 interface WeightClassCardProps {
-  weightClass: string;
-  weightClassSlug: string;
-  gender: Gender;
-  variant: "left" | "right";
-  championImageUrl?: string;
+  division: WeightClassDef
+  championImageUrl?: string
+  /** Named bento cell this card occupies (maps to a grid-template-areas slot). */
+  gridArea?: string
+  /** Marks a flanking sentinel card for the scroll-entry animation (#15). */
+  sentinel?: 'left' | 'right'
+  /** Cell shape — drives the champion photo's crop/zoom framing. */
+  format?: 'tall' | 'wide' | 'square'
 }
 
-// ClipPath paths (0-1 objectBoundingBox) mirror the border's circular arc.
-// For 4:3 cards, R=25% of height maps to 18.75% of width.
-export const WEIGHT_CLASS_CARD_PATHS = {
-  left: "M 0,0 L 1,0 L 1,0.75 A 0.1875,0.25 0 0 1 0.8125,1 L 0,1 Z",
-  right:
-    "M 0,0 L 1,0 L 1,1 L 0.1875,1 A 0.1875,0.25 0 0 1 0,0.75 L 0,0 Z",
-};
-
-export const WEIGHT_CLASS_CARD_OUTLINE_PATHS = {
-  left: "M 0,0 L 100,0 L 100,75 A 18.75,25 0 0 1 81.25,100 L 0,100 Z",
-  right:
-    "M 0,0 L 100,0 L 100,100 L 18.75,100 A 18.75,25 0 0 1 0,75 L 0,0 Z",
-};
-
-export function parseBorderGradientStops(value: string): [string, string, string] {
-  const stops = value
-    .split(/,(?![^()]*\))/)
-    .map((stop) => stop.trim())
-    .filter(Boolean);
-
-  return [
-    stops[0] ?? "white",
-    stops[1] ?? "rgba(255, 255, 255, 0.15)",
-    stops[2] ?? stops[0] ?? "white",
-  ];
-}
+/** Visible stroke segment as a fraction of the rectangle's perimeter. */
+const SWEEP_SEGMENT = 0.18
+/** Seconds for one full clockwise lap of the perimeter. */
+const SWEEP_DURATION = 4
+/** Hover guard: skip the sweep on touch devices and small viewports. */
+const NO_HOVER = '(max-width: 48em), (hover: none)'
 
 export default function WeightClassCard({
-  weightClass,
-  weightClassSlug,
-  gender,
-  variant,
+  division,
   championImageUrl,
+  gridArea,
+  sentinel,
+  format,
 }: WeightClassCardProps) {
-  const cardRef = useRef<HTMLElement>(null);
-  const linkRef = useRef<HTMLAnchorElement>(null);
-  const borderPathRef = useRef<SVGPathElement>(null);
-  const borderGradientRef = useRef<SVGLinearGradientElement>(null);
-  const borderStopRefs = useRef<Array<SVGStopElement | null>>([]);
-  const sheenRef = useRef<HTMLDivElement>(null);
-  const navigate = useNavigate();
-  const clipId = useId();
-  const gradientId = `${clipId}-border-gradient`;
+  const slug = division.key.replace(/^(mens|womens)-/, '')
+  const gender = division.division
+  const range = formatWeightRange(division)
 
-  const { contextSafe } = useGSAP({ scope: cardRef });
+  const cardRef = useRef<HTMLDivElement>(null)
+  const rectRef = useRef<SVGRectElement>(null)
+  const sheenRef = useRef<HTMLDivElement>(null)
+  const tlRef = useRef<gsap.core.Timeline | null>(null)
 
-  const handleHoverEnter = contextSafe(() => {
-    if (window.matchMedia("(max-width: 48em), (hover: none)").matches) return;
+  // Kill the hover timeline if the card unmounts mid-sweep.
+  useGSAP(() => () => { tlRef.current?.kill() }, { scope: cardRef })
 
-    const card = cardRef.current;
-    const borderPath = borderPathRef.current;
-    const borderGradient = borderGradientRef.current;
-    const sheen = sheenRef.current;
-    if (!card || !borderPath || !borderGradient || !sheen) return;
+  function handleEnter() {
+    if (window.matchMedia(NO_HOVER).matches) return
+    const card = cardRef.current
+    const rect = rectRef.current
+    const sheen = sheenRef.current
+    if (!card || !rect || !sheen) return
 
-    const [start, middle, end] = parseBorderGradientStops(
-      getComputedStyle(card).getPropertyValue("--border-gradient-stops"),
-    );
+    // Clear any in-flight leave fade or prior sweep before starting fresh.
+    gsap.killTweensOf([rect, sheen])
+    tlRef.current?.kill()
 
-    borderStopRefs.current[0]?.setAttribute("stop-color", start);
-    borderStopRefs.current[1]?.setAttribute("stop-color", middle);
-    borderStopRefs.current[2]?.setAttribute("stop-color", end);
+    // Perimeter straight from geometry: 2 * (w + h). The SVG has no viewBox, so its
+    // user units are CSS pixels and the rect can be sized to match the card exactly.
+    const { width, height } = card.getBoundingClientRect()
+    const stroke = 3
+    const inset = stroke / 2
+    const w = width - stroke
+    const h = height - stroke
+    const perimeter = 2 * (w + h)
+    const segment = perimeter * SWEEP_SEGMENT
 
-    gsap.killTweensOf([borderPath, borderGradient, sheen]);
-
-    gsap.set(borderPath, {
-      opacity: 1,
-      strokeDashoffset: 1,
-    });
-
-    gsap.to(borderPath, {
+    gsap.set(rect, {
+      attr: { x: inset, y: inset, width: w, height: h },
+      // segment + gap === perimeter, so the pattern tiles the closed path exactly
+      // once: one visible segment, and the wrap at the seam is perfectly continuous.
+      strokeDasharray: `${segment} ${perimeter - segment}`,
       strokeDashoffset: 0,
-      duration: 0.9,
-      ease: "power3.out",
-    });
+      opacity: 1,
+    })
+    gsap.set(sheen, { xPercent: -160, opacity: 0 })
 
-    gsap.fromTo(
-      borderGradient,
-      { attr: { gradientTransform: "rotate(0 .5 .5)" } },
-      {
-        attr: { gradientTransform: "rotate(360 .5 .5)" },
-        duration: 2.8,
-        ease: "none",
-        repeat: -1,
-      },
-    );
+    // One composed, looping timeline drives both the perimeter sweep and the sheen.
+    const tl = gsap.timeline({ repeat: -1, defaults: { ease: 'none' } })
 
-    gsap.fromTo(
+    // Clockwise sweep: marching the dash by exactly one perimeter returns the
+    // pattern to an identical state, so the loop is seamless with no seam stutter.
+    tl.to(rect, { strokeDashoffset: -perimeter, duration: SWEEP_DURATION }, 0)
+
+    // The sheen fires in sync as the segment crosses the card's horizontal midpoint
+    // (~37.5% into the lap, mid right-edge for a square-ish card), streaking once per loop.
+    const midpoint = SWEEP_DURATION * 0.375
+    tl.fromTo(
       sheen,
-      { autoAlpha: 0, xPercent: -140 },
-      {
-        autoAlpha: 1,
-        xPercent: 140,
-        duration: 1.15,
-        ease: "power2.out",
-        onComplete: () => {
-          gsap.set(sheen, { autoAlpha: 0 });
-        },
-      },
-    );
-  });
+      { xPercent: -160, opacity: 0 },
+      { xPercent: 160, opacity: 1, duration: 0.55, ease: 'power2.in' },
+      midpoint,
+    ).to(sheen, { opacity: 0, duration: 0.2, ease: 'power2.out' }, '>-0.12')
 
-  const handleHoverLeave = contextSafe(() => {
-    const borderPath = borderPathRef.current;
-    const borderGradient = borderGradientRef.current;
-    const sheen = sheenRef.current;
-    if (!borderPath || !borderGradient || !sheen) return;
+    tlRef.current = tl
+  }
 
-    gsap.killTweensOf([borderPath, borderGradient, sheen]);
-    gsap.to(borderPath, {
+  function handleLeave() {
+    const rect = rectRef.current
+    const sheen = sheenRef.current
+    tlRef.current?.kill()
+    tlRef.current = null
+    gsap.to([rect, sheen].filter(Boolean), {
       opacity: 0,
       duration: 0.35,
-      ease: "power2.out",
-    });
-    gsap.set(sheen, { autoAlpha: 0, xPercent: -140 });
-  });
-
-  const handleClick = contextSafe((e: React.MouseEvent) => {
-    e.preventDefault();
-
-    const card = cardRef.current;
-    if (!card) return;
-
-    const rect = card.getBoundingClientRect();
-    const clone = card.cloneNode(true) as HTMLElement;
-    document.body.appendChild(clone);
-
-    gsap.set(clone, {
-      position: "fixed",
-      top: rect.top,
-      left: rect.left,
-      width: rect.width,
-      height: rect.height,
-      margin: 0,
-      zIndex: 9999,
-      clipPath: "none",
-    });
-
-    gsap.set(card, { opacity: 0 });
-
-    gsap.to(clone, {
-      top: 0,
-      left: 0,
-      width: "100vw",
-      height: "100vh",
-      duration: 0.6,
-      ease: "power3.inOut",
-      onComplete: () => {
-        navigate({
-          to: "/divisions/$gender/$weightClass",
-          params: { gender, weightClass: weightClassSlug },
-        }).then(() => {
-          clone.remove();
-          gsap.set(card, { opacity: 1 });
-        });
-      },
-    });
-  });
+      ease: 'power2.out',
+    })
+  }
 
   return (
-    <article
+    <Card
       ref={cardRef}
-      className={`${classes.card} ${variant === "left" ? classes.cardLeft : classes.cardRight}`}
+      radius={0}
+      padding={0}
+      className={classes.card}
+      style={gridArea ? { gridArea } : undefined}
+      data-sentinel={sentinel}
+      data-format={format}
+      onMouseEnter={handleEnter}
+      onMouseLeave={handleLeave}
     >
-      <svg
-        className={classes.borderSvg}
-        viewBox="0 0 100 100"
-        preserveAspectRatio="none"
-        aria-hidden="true"
-      >
-        <defs>
-          <clipPath id={clipId} clipPathUnits="objectBoundingBox">
-            <path d={WEIGHT_CLASS_CARD_PATHS[variant]} />
-          </clipPath>
-          <linearGradient
-            ref={borderGradientRef}
-            id={gradientId}
-            x1="0"
-            y1="0"
-            x2="1"
-            y2="1"
-            gradientTransform="rotate(0 .5 .5)"
-          >
-            <stop
-              ref={(node) => {
-                borderStopRefs.current[0] = node;
-              }}
-              offset="0%"
-              stopColor="white"
-            />
-            <stop
-              ref={(node) => {
-                borderStopRefs.current[1] = node;
-              }}
-              offset="50%"
-              stopColor="rgba(255, 255, 255, 0.15)"
-            />
-            <stop
-              ref={(node) => {
-                borderStopRefs.current[2] = node;
-              }}
-              offset="100%"
-              stopColor="white"
-            />
-          </linearGradient>
-        </defs>
-        <path
-          d={WEIGHT_CLASS_CARD_OUTLINE_PATHS[variant]}
-          className={classes.outlinePath}
-          vectorEffect="non-scaling-stroke"
-        />
-        <path
-          ref={borderPathRef}
-          d={WEIGHT_CLASS_CARD_OUTLINE_PATHS[variant]}
-          className={classes.borderPath}
-          pathLength={1}
-          stroke={`url(#${gradientId})`}
-          vectorEffect="non-scaling-stroke"
-        />
+      {championImageUrl ? (
+        <img src={championImageUrl} alt="" className={classes.photo} />
+      ) : (
+        <div className={classes.placeholder} aria-hidden="true" />
+      )}
+
+      <div className={classes.gradient} aria-hidden="true" />
+
+      {/* Diagonal light streak, fired in sync with the sweep crossing the midpoint. */}
+      <div ref={sheenRef} className={classes.sheen} aria-hidden="true" />
+
+      {/* Frame Sweep. No viewBox -> user units are px; the rect is sized on hover so
+          the perimeter dash math is pixel-exact and corners stay sharp right angles. */}
+      <svg className={classes.frameSvg} aria-hidden="true">
+        <rect ref={rectRef} className={classes.frameRect} />
       </svg>
 
-      <div
-        className={classes.imageWrapper}
-        style={{ clipPath: `url(#${clipId})` }}
-      >
-        {championImageUrl ? (
-          <img src={championImageUrl} alt="" className={classes.image} />
-        ) : (
-          <div className={classes.image} style={{ background: "#222" }} />
-        )}
-        <div className={classes.overlay} />
-        <div ref={sheenRef} className={classes.sheen} />
-      </div>
-
-      <div className={classes.content}>
-        <h3 className={classes.title}>{weightClass}</h3>
+      <div className={classes.label}>
+        <span className={classes.division}>{division.shortLabel}</span>
+        <span className={classes.range}>{range}</span>
       </div>
 
       <Link
-        ref={linkRef}
         to="/divisions/$gender/$weightClass"
-        params={{ gender, weightClass: weightClassSlug }}
+        params={{ gender, weightClass: slug }}
         className={classes.linkLayer}
-        style={{ clipPath: `url(#${clipId})` }}
-        aria-label={`${gender === "mens" ? "Men's" : "Women's"} ${weightClass} Division`}
-        onClick={handleClick}
-        onMouseEnter={handleHoverEnter}
-        onMouseLeave={handleHoverLeave}
+        aria-label={`${gender === 'mens' ? "Men's" : "Women's"} ${division.shortLabel} Division`}
       />
-    </article>
-  );
+    </Card>
+  )
 }

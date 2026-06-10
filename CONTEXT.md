@@ -15,10 +15,16 @@ The opening pinned-scroll section of the Experience Route. Animates a red slash,
 The Men's / Women's switcher that sits between the Hero Chapter and the Weight Class Grid in the Experience Route.
 
 ### Weight Class Grid
-The grid of clickable division cards below the Division Toggle. Each card shows the champion's photo with a custom clip-path shape and the division name.
+The bento grid of clickable division cards below the Division Toggle. Men's layout: Heavyweight (left, tall) and Lt. Heavyweight (right, tall) flank a center column of six divisions. Women's layout: Bantamweight (left, tall) and Featherweight (right, tall) flank a center column with Strawweight and Flyweight stacked. The flanking sentinel cells are fixed editorial picks, not data-driven.
 
 ### Weight Class Card
-A single clickable card in the Weight Class Grid. Left/right variants alternate. Clicking triggers a GSAP expand-to-fullscreen transition before navigating to the Division Route.
+A single clickable card in the Weight Class Grid. Mantine Card with no border radius, full-bleed champion photo, and a bottom-left label showing the division name and weight range (e.g. "206 – 265 LBS"). Clicking triggers a GSAP Flip expand-to-fullscreen transition before navigating to the Division Route. On hover, displays the Frame Sweep effect.
+
+### Division Toggle
+The Men's / Women's switcher integrated as a section header directly above the Weight Class Grid. Toggling between genders swaps the full grid with a staggered animation.
+
+### Frame Sweep
+The hover effect on a Weight Class Card. A red (#D20A0A) stroke segment travels around the card's rectangular SVG `<rect>` outline as one composed GSAP timeline: the segment grows in, sweeps the full perimeter, a light sheen fires as the segment crosses center, then both fade on leave. The rectangular geometry makes the perimeter deterministic — no arc math or getTotalLength() required.
 
 ### Division Route
 The per-division page at `/divisions/$gender/$weightClass`. Full-screen, no header, black background. Presents fighter beats in a GSAP-scrubbed pinned scroll.

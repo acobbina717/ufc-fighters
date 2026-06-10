@@ -1,6 +1,6 @@
 # ADR 0001 — SVG stroke for animated clip-path border
 
-**Status:** Accepted
+**Status:** Superseded by [ADR 0003](0003-frame-sweep-hover-effect.md)
 
 ## Context
 

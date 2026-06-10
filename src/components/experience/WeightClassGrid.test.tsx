@@ -1,0 +1,84 @@
+// @vitest-environment jsdom
+import { readFileSync } from 'node:fs'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { cleanup, render } from '@testing-library/react'
+import { MantineProvider } from '@mantine/core'
+import { mantineTheme } from '#/lib/mantine'
+
+// Router Link is the card's only external dependency — render it as a plain
+// anchor so each card contributes exactly one <a> we can count.
+vi.mock('@tanstack/react-router', () => ({
+  Link: ({ to, params, children, ...rest }: any) => {
+    const href = String(to)
+      .replace('$gender', params.gender)
+      .replace('$weightClass', params.weightClass)
+    return (
+      <a href={href} {...rest}>
+        {children}
+      </a>
+    )
+  },
+}))
+
+// GSAP entry animation is irrelevant to layout structure — stub it out.
+vi.mock('#/lib/gsap', () => ({
+  gsap: { fromTo: () => {} },
+  useGSAP: () => {},
+}))
+
+// No Convex in jsdom — return an empty champions list so every card renders
+// its placeholder.
+vi.mock('#/hooks/useStableQuery', () => ({
+  useStableQuery: () => [],
+}))
+
+vi.mock('../../../convex/_generated/api', () => ({
+  api: { fighters: { getChampionsByGender: 'getChampionsByGender' } },
+}))
+
+import WeightClassGrid from './WeightClassGrid'
+
+function renderGrid(gender: 'mens' | 'womens') {
+  return render(
+    <MantineProvider theme={mantineTheme}>
+      <WeightClassGrid gender={gender} />
+    </MantineProvider>,
+  )
+}
+
+afterEach(cleanup)
+
+describe('WeightClassGrid bento layout', () => {
+  it("renders 8 cards for the men's grid", () => {
+    const { container } = renderGrid('mens')
+    expect(container.querySelectorAll('a').length).toBe(8)
+  })
+
+  it("renders 4 cards for the women's grid", () => {
+    const { container } = renderGrid('womens')
+    expect(container.querySelectorAll('a').length).toBe(4)
+  })
+
+  it("marks the two flanking sentinels in the men's grid", () => {
+    const { container } = renderGrid('mens')
+    expect(container.querySelectorAll('[data-sentinel]').length).toBe(2)
+    expect(container.querySelector('[data-sentinel="left"]')).not.toBeNull()
+    expect(container.querySelector('[data-sentinel="right"]')).not.toBeNull()
+  })
+
+  it("marks the two flanking sentinels in the women's grid", () => {
+    const { container } = renderGrid('womens')
+    expect(container.querySelectorAll('[data-sentinel]').length).toBe(2)
+    expect(container.querySelector('[data-sentinel="left"]')).not.toBeNull()
+    expect(container.querySelector('[data-sentinel="right"]')).not.toBeNull()
+  })
+
+  it('leaves no clip-path-era custom properties in the grid CSS', () => {
+    const css = readFileSync(
+      'src/components/experience/WeightClassGrid.module.css',
+      'utf8',
+    )
+    expect(css).not.toContain('--curve-r')
+    expect(css).not.toContain('--frame-color')
+  })
+})

@@ -1,169 +1,136 @@
 .card {
   position: relative;
   width: 100%;
-  aspect-ratio: 4 / 3;
-  background: transparent;
+  /* The bento grid cell sizes the card; fill it. Mobile gives a fallback ratio. */
+  height: 100%;
+  overflow: hidden;
+  background: var(--mantine-color-dark-9);
+  /* cqw in the label resolves against the card's own width, not the grid's. */
+  container-type: inline-size;
+}
+
+.photo,
+.placeholder {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* Default (square cells): head-anchored crop. Overridden per cell shape below. */
+  object-position: top center;
+  transform-origin: center 30%;
+}
+
+/*
+ * Per-cell framing. UFC headshots are a centred subject on black with generous
+ * margins, so the right crop depends on the cell's shape:
+ *  - tall sentinels show the full body+belt, anchored to the top (default crop, no zoom)
+ *  - wide landscape bands centre the subject and zoom in so the black margins crop out
+ */
+.card[data-format='tall'] .photo {
+  object-position: top center;
+}
+
+.card[data-format='wide'] .photo {
+  object-position: center top;
+  transform-origin: top center;
+  transform: scale(1.1);
+}
+
+.placeholder {
+  background: var(--mantine-color-dark-9);
+}
+
+/* Legibility gradient anchored to the card base, behind the label. */
+.gradient {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.85) 0%,
+    rgba(0, 0, 0, 0.45) 30%,
+    rgba(0, 0, 0, 0) 60%
+  );
+}
+
+/* Diagonal sheen streak — sized to the card, translated across on hover (#11). */
+.sheen {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 1;
+  mix-blend-mode: screen;
+  background: linear-gradient(
+    105deg,
+    transparent 38%,
+    rgba(255, 255, 255, 0.35) 50%,
+    transparent 62%
+  );
+  will-change: transform, opacity;
+}
+
+/* Frame Sweep layer. No viewBox: user units == px, so the rect (sized on hover)
+   matches the card and the perimeter dash stays uniform with sharp corners. */
+.frameSvg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+  z-index: 1;
+}
+
+.frameRect {
+  fill: none;
+  /* ufcRed-6 === #D20A0A. Hidden at rest (opacity 0); the hover timeline reveals it. */
+  stroke: var(--mantine-color-ufcRed-6);
+  stroke-width: 3;
+  opacity: 0;
+  vector-effect: non-scaling-stroke;
+}
+
+.label {
+  position: absolute;
+  left: var(--mantine-spacing-md);
+  bottom: var(--mantine-spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  pointer-events: none;
   z-index: 2;
-  --border-gradient-stops: white, rgba(255, 255, 255, 0.15), white;
+}
+
+.division {
+  font-family: var(--mantine-font-family-headings);
+  font-weight: 800;
+  font-size: clamp(20px, 3.5cqw, 38px);
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--mantine-color-white);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+.range {
+  font-family: var(--mantine-font-family-monospace);
+  font-size: clamp(11px, 1.4cqw, 14px);
+  letter-spacing: 0.12em;
+  color: var(--mantine-color-gray-3);
 }
 
 .linkLayer {
   position: absolute;
   inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  z-index: 3;
+  display: block;
   text-decoration: none;
   cursor: pointer;
-  z-index: 10;
-  /* clip-path applied inline from CLIP_PATHS — constrains hit area to the card shape */
 }
 
 .linkLayer:focus-visible {
   outline: 2px solid var(--mantine-color-ufcRed-6);
   outline-offset: -4px;
-}
-
-.imageWrapper {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  background: light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-9));
-  pointer-events: none;
-}
-
-.borderSvg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-  pointer-events: none;
-  z-index: 3;
-}
-
-.borderPath {
-  fill: none;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  opacity: 0;
-  vector-effect: non-scaling-stroke;
-}
-
-.outlinePath {
-  fill: none;
-  stroke: var(--frame-color);
-  stroke-width: 8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  vector-effect: non-scaling-stroke;
-}
-
-.image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: top center;
-  opacity: 1;
-  transform: scale(1);
-  transform-origin: center center;
-  transition:
-    transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
-  filter: none;
-}
-
-.overlay {
-  position: absolute;
-  inset: 0;
-  display: none;
-}
-
-.sheen {
-  position: absolute;
-  inset: -20%;
-  z-index: 2;
-  opacity: 0;
-  pointer-events: none;
-  transform: translateX(-140%) skewX(-12deg);
-  background: linear-gradient(
-    115deg,
-    transparent 35%,
-    rgba(255, 255, 255, 0.08) 44%,
-    rgba(255, 255, 255, 0.34) 50%,
-    rgba(255, 255, 255, 0.08) 56%,
-    transparent 65%
-  );
-  mix-blend-mode: screen;
-}
-
-.content {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 4;
-  text-align: center;
-  padding: 20px;
-  transform: translateY(10px);
-  transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-  pointer-events: none;
-}
-
-.title {
-  font-family: var(--mantine-font-family-headings);
-  font-weight: 800;
-  font-size: clamp(24px, 4vw, 48px);
-  letter-spacing: 0.1em;
-  color: light-dark(#000, #fff);
-  text-transform: uppercase;
-  margin: 0;
-  text-shadow: light-dark(none, 0 4px 12px rgba(0, 0, 0, 0.5));
-}
-
-@media (hover: hover) {
-  /* Hover states driven by the interactive Link layer, using :has() to reach siblings */
-  /* Scale is applied to .image, not .imageWrapper, so the clip-path frame stays fixed */
-  .card:has(.linkLayer:hover) .image {
-    transform: scale(1.08);
-  }
-
-  .card:has(.linkLayer:hover) .content {
-    transform: translateY(0);
-  }
-}
-
-@media (max-width: 48em) {
-  .card {
-    width: 100%;
-    aspect-ratio: 4 / 3;
-    border-radius: 8px;
-    overflow: hidden;
-    clip-path: none !important;
-  }
-
-  .card > svg {
-    display: none;
-  }
-
-  .linkLayer {
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    border-radius: 8px;
-    clip-path: none !important;
-  }
-
-  .imageWrapper {
-    clip-path: none !important;
-    border-radius: 8px;
-  }
-
-  .card:has(.linkLayer:hover) .image {
-    transform: scale(1);
-  }
 }
