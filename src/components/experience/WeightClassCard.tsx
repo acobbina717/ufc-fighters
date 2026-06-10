@@ -20,8 +20,8 @@ interface WeightClassCardProps {
 const SWEEP_SEGMENT = 0.18
 /** Seconds for one full clockwise lap of the perimeter. */
 const SWEEP_DURATION = 4
-/** Hover guard: skip the sweep on touch devices and small viewports. */
-const NO_HOVER = '(max-width: 48em), (hover: none)'
+/** Hover guard: skip the looping sweep on touch devices, small viewports, and for reduced-motion users. */
+const NO_HOVER = '(max-width: 48em), (hover: none), (prefers-reduced-motion: reduce)'
 
 export default function WeightClassCard({
   division,
@@ -81,8 +81,10 @@ export default function WeightClassCard({
     tl.to(rect, { strokeDashoffset: -perimeter, duration: SWEEP_DURATION }, 0)
 
     // The sheen fires in sync as the segment crosses the card's horizontal midpoint
-    // (~37.5% into the lap, mid right-edge for a square-ish card), streaking once per loop.
-    const midpoint = SWEEP_DURATION * 0.375
+    // — the mid-point of the right edge, at distance (w + h/2) along the clockwise
+    // lap. Derived from real geometry so it stays centred on tall and wide cells too
+    // (this reduces to 0.375 only on a square card).
+    const midpoint = SWEEP_DURATION * ((w + h / 2) / perimeter)
     tl.fromTo(
       sheen,
       { xPercent: -160, opacity: 0 },

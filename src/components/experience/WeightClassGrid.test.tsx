@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { readFileSync } from 'node:fs'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, render } from '@testing-library/react'
+import { cleanup, fireEvent, render } from '@testing-library/react'
 import { MantineProvider } from '@mantine/core'
 import { mantineTheme } from '#/lib/mantine'
 
@@ -38,12 +38,18 @@ vi.mock('../../../convex/_generated/api', () => ({
 
 import WeightClassGrid from './WeightClassGrid'
 
+// The grid now owns gender state and renders its own DivisionToggle header, so
+// reaching the women's grid means clicking the toggle rather than passing a prop.
 function renderGrid(gender: 'mens' | 'womens') {
-  return render(
+  const result = render(
     <MantineProvider theme={mantineTheme}>
-      <WeightClassGrid gender={gender} />
+      <WeightClassGrid />
     </MantineProvider>,
   )
+  if (gender === 'womens') {
+    fireEvent.click(result.getByText("Women's Division"))
+  }
+  return result
 }
 
 afterEach(cleanup)
@@ -80,5 +86,37 @@ describe('WeightClassGrid bento layout', () => {
     )
     expect(css).not.toContain('--curve-r')
     expect(css).not.toContain('--frame-color')
+  })
+})
+
+// #15 — scroll-entry flanking animation. The behaviour is GSAP-on-scroll, which
+// jsdom can't exercise, so we assert the wiring against the component source.
+describe('#15 scroll-entry flanking animation', () => {
+  const src = readFileSync(
+    'src/components/experience/WeightClassGrid.tsx',
+    'utf8',
+  )
+
+  it('gates the entrance to desktop with no-preference motion via matchMedia', () => {
+    expect(src).toContain('gsap.matchMedia()')
+    expect(src).toContain('(min-width: 48.0625em) and (prefers-reduced-motion: no-preference)')
+  })
+
+  it('drives the timeline from a ScrollTrigger at "top 80%"', () => {
+    expect(src).toContain('scrollTrigger:')
+    expect(src).toContain("start: 'top 80%'")
+  })
+
+  it('animates the sentinels from their edges and the center column after', () => {
+    expect(src).toContain(':scope > [data-sentinel="left"]')
+    expect(src).toContain(':scope > [data-sentinel="right"]')
+    expect(src).toContain(':scope > :not([data-sentinel])')
+    expect(src).toContain('x: -120')
+    expect(src).toContain('x: 120')
+  })
+
+  it('re-runs cleanly on gender swap via revertOnUpdate', () => {
+    expect(src).toContain('dependencies: [gender]')
+    expect(src).toContain('revertOnUpdate: true')
   })
 })

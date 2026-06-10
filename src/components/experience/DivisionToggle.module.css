@@ -1,7 +1,9 @@
 .wrapper {
   display: flex;
   justify-content: center;
-  margin: var(--mantine-spacing-xl) 0;
+  /* Header of the Weight Class Grid section: breathing room above to separate from
+     the hero, a tighter gap below so it reads as the grid's label, not a floater. */
+  margin: var(--mantine-spacing-xl) 0 var(--mantine-spacing-lg);
 }
 
 .toggle {
