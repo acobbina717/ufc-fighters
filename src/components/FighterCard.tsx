@@ -1,6 +1,10 @@
 import { useRef } from 'react'
+import { Badge } from '@mantine/core'
 import { gsap } from '#/lib/gsap'
+import { api } from '../../convex/_generated/api'
 import type { Doc } from '../../convex/_generated/dataModel'
+import { useStableQuery } from '#/hooks/useStableQuery'
+import { formatEventDate } from '#/lib/formatEventDate'
 import classes from './FighterCard.module.css'
 
 interface FighterCardProps {
@@ -41,6 +45,9 @@ function getRankingLabel(ranking: number | undefined): string {
 
 export default function FighterCard({ fighter, onClick }: FighterCardProps) {
   const cardRef = useRef<HTMLDivElement>(null)
+  const nextFight = useStableQuery(api.fighters.getNextFightForFighter, {
+    fighterId: fighter._id,
+  })
 
   function handleMouseEnter() {
     gsap.to(cardRef.current, {
@@ -128,6 +135,21 @@ export default function FighterCard({ fighter, onClick }: FighterCardProps) {
         </div>
         {fighter.country && (
           <div className={classes.country}>{fighter.country}</div>
+        )}
+        {nextFight && (
+          <Badge
+            color="ufcRed"
+            variant="light"
+            radius="xs"
+            size="sm"
+            mt="xs"
+            fullWidth
+            styles={{ label: { textTransform: 'none' } }}
+          >
+            NEXT FIGHT · {formatEventDate(nextFight.event.date)}
+            {' · '}
+            {nextFight.opponent ? `vs ${nextFight.opponent.name}` : 'vs TBA'}
+          </Badge>
         )}
       </div>
     </div>

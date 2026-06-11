@@ -5,9 +5,17 @@ import { useRef } from 'react'
 import { useMantineTheme } from '@mantine/core'
 import { useMediaQuery, useReducedMotion } from '@mantine/hooks'
 import { api } from '../../../convex/_generated/api'
+import type { Doc } from '../../../convex/_generated/dataModel'
 import { useStableQuery } from '#/hooks/useStableQuery'
+import { formatEventDate } from '#/lib/formatEventDate'
 import { gsap, SplitText, useGSAP } from '#/lib/gsap'
 import classes from './HeroChapter.module.css'
+
+// Last name (final whitespace-delimited token), uppercased; "TBA" when absent.
+function cornerName(fighter: Doc<'fighters'> | null | undefined): string {
+  const last = fighter?.name?.trim().split(/\s+/).pop()
+  return last ? last.toUpperCase() : 'TBA'
+}
 
 export default function HeroChapter() {
   const heroRef = useRef<HTMLElement>(null)
@@ -21,6 +29,15 @@ export default function HeroChapter() {
   const theme = useMantineTheme()
   const isMobile = useMediaQuery(`(max-width: calc(${theme.breakpoints.sm} - 0.0625em))`)
   const featuredFighter = useStableQuery(api.fighters.getFeaturedFighter, {})
+  const nextEvent = useStableQuery(api.events.getNextEvent, {})
+
+  // Defaults keep the press pass populated while the query loads or returns null,
+  // so the GSAP timeline target (pressPassRef) always has content to fade.
+  const eventName = nextEvent?.name ?? 'TBA'
+  const matchup = nextEvent
+    ? `${cornerName(nextEvent.fighterA)} vs ${cornerName(nextEvent.fighterB)}`
+    : 'TO BE ANNOUNCED'
+  const eventDate = nextEvent ? formatEventDate(nextEvent.date) : 'DATE TBA'
 
   useGSAP(() => {
     if (prefersReduced) {
@@ -109,11 +126,11 @@ export default function HeroChapter() {
         <div ref={pressPassRef} className={classes.pressPass} aria-label="Next UFC event">
           <div className={classes.pressPassInfo}>
             <span className={classes.pressPassLabel}>Next Event</span>
-            <span className={classes.pressPassName}>UFC 314</span>
-            <span className={classes.pressPassMatchup}>PEREIRA vs ANKALAEV</span>
+            <span className={classes.pressPassName}>{eventName}</span>
+            <span className={classes.pressPassMatchup}>{matchup}</span>
             <span className={classes.pressPassDate}>
               <span className={classes.pressPassDot} aria-hidden="true" />
-              APR 18 · 2026
+              {eventDate}
             </span>
           </div>
         </div>
