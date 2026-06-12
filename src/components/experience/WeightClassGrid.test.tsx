@@ -36,7 +36,7 @@ vi.mock('../../../convex/_generated/api', () => ({
   api: { fighters: { getChampionsByGender: 'getChampionsByGender' } },
 }))
 
-import WeightClassGrid from './WeightClassGrid'
+import WeightClassGrid, { DESKTOP_MOTION_QUERY } from './WeightClassGrid'
 
 // The grid now owns gender state and renders its own DivisionToggle header, so
 // reaching the women's grid means clicking the toggle rather than passing a prop.
@@ -99,7 +99,12 @@ describe('#15 scroll-entry flanking animation', () => {
 
   it('gates the entrance to desktop with no-preference motion via matchMedia', () => {
     expect(src).toContain('gsap.matchMedia()')
-    expect(src).toContain('(min-width: 48.0625em) and (prefers-reduced-motion: no-preference)')
+    expect(src).toContain('DESKTOP_MOTION_QUERY')
+    // The query is derived from theme.breakpoints.sm — assert the resolved
+    // value so a theme change that would shift the breakpoint is caught.
+    expect(DESKTOP_MOTION_QUERY).toBe(
+      '(min-width: 48.0625em) and (prefers-reduced-motion: no-preference)',
+    )
   })
 
   it('drives the timeline from a ScrollTrigger at "top 80%"', () => {

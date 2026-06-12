@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { parseEventCard, parseEventListing } from './eventParse'
+import { parseEventCard, parseEventListing, parseEventVenue } from './eventParse'
 
 const listingHtml = readFileSync(
   join(__dirname, '__fixtures__', 'events-listing.html'),
@@ -73,6 +73,23 @@ describe('parseEventCard', () => {
     expect(bouts[7].division).toBe('womens') // Women's Flyweight Bout
   })
 
+  it('extracts display names from given/family-name spans', () => {
+    const main = parseEventCard(cardHtml)[0]
+    expect(main.fighterAName).toBe('Conor McGregor')
+    expect(main.fighterBName).toBe('Max Holloway')
+  })
+
+  it('extracts plain-anchor display names with diacritics intact (not slug-derived)', () => {
+    const bouts = parseEventCard(cardHtml)
+    // Benoît Saint Denis renders as plain anchor text; slugToName would mangle
+    // this to "Benoit Saint Denis".
+    const bsd = bouts.find((b) => b.fighterBSlug === 'benoit-saint-denis')
+    expect(bsd?.fighterBName).toBe('Benoît Saint Denis')
+    // Lone’er Kavanagh keeps the apostrophe the slug drops.
+    const kavanagh = bouts.find((b) => b.fighterBSlug === 'loneer-kavanagh')
+    expect(kavanagh?.fighterBName).toBe('Lone’er Kavanagh')
+  })
+
   it('marks the opponent as TBA (absent fighterBSlug) when no blue-corner athlete is linked', () => {
     // Derive a TBA case from the real fixture: drop the main event's blue-corner link.
     const tbaHtml = cardHtml.replace(
@@ -82,5 +99,18 @@ describe('parseEventCard', () => {
     const main = parseEventCard(tbaHtml)[0]
     expect(main.fighterASlug).toBe('conor-mcgregor')
     expect(main.fighterBSlug).toBeUndefined()
+  })
+})
+
+describe('parseEventVenue', () => {
+  it('extracts venue and location from the event hero', () => {
+    expect(parseEventVenue(cardHtml)).toEqual({
+      venue: 'T-Mobile Arena',
+      location: 'Las Vegas, United States',
+    })
+  })
+
+  it('returns undefined when the page has no venue block', () => {
+    expect(parseEventVenue('<html><body>no venue here</body></html>')).toBeUndefined()
   })
 })

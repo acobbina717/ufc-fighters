@@ -206,7 +206,7 @@ export const getFeaturedFighter = query({
     const hw = await ctx.db
       .query('fighters')
       .withIndex('by_weight_class_ranking', (q) =>
-        q.eq('weightClass', 'mens-heavyweight').eq('ranking', 0)
+        q.eq('weightClass', 'heavyweight').eq('ranking', 0)
       )
       .first()
     if (hw?.photoUrl) return hw
@@ -214,7 +214,7 @@ export const getFeaturedFighter = query({
     const lw = await ctx.db
       .query('fighters')
       .withIndex('by_weight_class_ranking', (q) =>
-        q.eq('weightClass', 'mens-lightweight').eq('ranking', 0)
+        q.eq('weightClass', 'lightweight').eq('ranking', 0)
       )
       .first()
     return lw ?? null

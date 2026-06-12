@@ -6,7 +6,7 @@ import { MantineProvider } from '@mantine/core'
 import { mantineTheme } from '#/lib/mantine'
 import { MENS_DIVISIONS, WOMENS_DIVISIONS } from '#/lib/weightClasses'
 import type { WeightClassDef } from '#/lib/weightClasses'
-import WeightClassCard from './WeightClassCard'
+import WeightClassCard, { NO_HOVER } from './WeightClassCard'
 
 // The router's Link is the card's only external dependency. Render it as a plain
 // anchor with the resolved href so we can assert navigation target behaviourally.
@@ -111,6 +111,10 @@ describe('WeightClassCard frame-sweep hover (#11)', () => {
   })
 
   it('suppresses hover on touch devices and small viewports', () => {
-    expect(cardSource).toContain('(max-width: 48em), (hover: none)')
+    // Derived from theme.breakpoints.sm — assert the resolved value so a theme
+    // change that would shift the guard is caught.
+    expect(NO_HOVER).toBe(
+      '(max-width: 48em), (hover: none), (prefers-reduced-motion: reduce)',
+    )
   })
 })

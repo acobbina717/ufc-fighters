@@ -39,6 +39,12 @@ All scheduled events (typically 2–4 months out) are stored, not just the next 
 
 `ufc.com/events` (listing page) + `ufc.com/event/{slug}` (individual event pages). Both are server-side rendered and yield clean HTML. The listing page provides event slugs, names, and Unix timestamps via `data-main-card-timestamp`. Individual event pages provide fighter slugs, names, weight classes, and bout order via `c-listing-fight` elements.
 
+### Card tier is a heuristic, not parsed data
+
+The SSR HTML lists every bout in one flat card-order list with no per-fight tier marker — the Main Card / Prelims / Early Prelims tabs are applied client-side. `cardTier` is therefore **derived** in `tierForOrder` (`convex/lib/eventParse.ts`): the top 5 bouts are `main`, the bottom 3 are `early_prelim` on an 11+ fight card, and everything between is `prelim`.
+
+Known failure mode: UFC numbered events frequently run 6-fight main cards, and Fight Night card splits vary — so the stored `cardTier` will be wrong for some real events. Treat it as approximate, never authoritative. Any future feature that displays per-tier card sections (fight history UI, card breakdowns) must either tolerate this imprecision or find a better source (e.g. embedded JSON, a per-tab endpoint) first.
+
 ## Consequences
 
 - `events` and `bouts` tables must be kept in sync by the cron — if the cron fails, event data goes stale silently. A Convex cron failure is observable in the Convex dashboard.

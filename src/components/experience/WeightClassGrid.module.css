@@ -46,7 +46,7 @@
 }
 
 /* Below sm, the bento collapses to a single full-width column with no overflow. */
-@media (max-width: 48em) {
+@media (max-width: $mantine-breakpoint-sm) {
   .mens,
   .womens {
     grid-template-columns: 1fr;

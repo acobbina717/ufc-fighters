@@ -6,6 +6,12 @@ import WeightClassCard from './WeightClassCard'
 import DivisionToggle from './DivisionToggle'
 import classes from './WeightClassGrid.module.css'
 import { gsap, useGSAP } from '#/lib/gsap'
+import { mantineTheme } from '#/lib/mantine'
+
+// One device pixel (0.0625em at 16px root) above theme.breakpoints.sm, so a
+// viewport of exactly 48em matches only the mobile branch, never both.
+const SM_EM = parseFloat(mantineTheme.breakpoints!.sm!)
+export const DESKTOP_MOTION_QUERY = `(min-width: ${SM_EM + 0.0625}em) and (prefers-reduced-motion: no-preference)`
 
 /**
  * Maps a division slug to its bento `grid-template-areas` cell. Names are shared
@@ -79,7 +85,7 @@ export default function WeightClassGrid() {
     // CSS) so mobile cards — where this branch never runs — stay visible, and a
     // reduced-motion user gets the cards immediately with no entrance at all.
     mm.add(
-      '(min-width: 48.0625em) and (prefers-reduced-motion: no-preference)',
+      DESKTOP_MOTION_QUERY,
       () => {
         gsap.set([left, right], { opacity: 0 })
         gsap.set(center, { opacity: 0 })
@@ -103,6 +109,9 @@ export default function WeightClassGrid() {
             0,
           )
           // ...then the center column fills in with a stagger on a short overlap.
+          // DOM order is ascending weight (flyweight first), so stagger from the
+          // end: the heaviest division leads and the fill sweeps top-to-bottom,
+          // matching the bento's editorial hierarchy.
           // Scope clearProps to the animated props only — `clearProps: 'all'` does
           // `style.cssText = ''`, wiping each card's inline `grid-area`.
           .fromTo(
@@ -112,7 +121,7 @@ export default function WeightClassGrid() {
               y: 0,
               opacity: 1,
               duration: 0.6,
-              stagger: 0.07,
+              stagger: { each: 0.07, from: 'end' },
               ease: 'power2.out',
               clearProps: 'transform,opacity',
             },

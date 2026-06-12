@@ -138,9 +138,10 @@ describe('getFeaturedFighter', () => {
   it('prefers the next event main-event fighter when they have a photo', async () => {
     const t = convexTest(schema, modules)
     await t.run(async (ctx) => {
-      // Heavyweight champ with a photo — the old default.
+      // Heavyweight champ with a photo — the old default. The scraper stores
+      // bare weight class keys (no gender prefix).
       await ctx.db.insert('fighters', fighter('HW Champ', {
-        weightClass: 'mens-heavyweight', ranking: 0, photoUrl: 'hw.png',
+        weightClass: 'heavyweight', ranking: 0, photoUrl: 'hw.png',
       }))
       // Main-event fighter with a photo.
       const headliner = await ctx.db.insert('fighters', fighter('Headliner', { photoUrl: 'head.png' }))
@@ -160,7 +161,7 @@ describe('getFeaturedFighter', () => {
     const t = convexTest(schema, modules)
     await t.run(async (ctx) => {
       await ctx.db.insert('fighters', fighter('HW Champ', {
-        weightClass: 'mens-heavyweight', ranking: 0, photoUrl: 'hw.png',
+        weightClass: 'heavyweight', ranking: 0, photoUrl: 'hw.png',
       }))
       const headliner = await ctx.db.insert('fighters', fighter('No Photo Headliner')) // no photoUrl
       const eventId = await ctx.db.insert('events', {
@@ -173,5 +174,35 @@ describe('getFeaturedFighter', () => {
 
     const featured = await t.query(api.fighters.getFeaturedFighter, {})
     expect(featured?.name).toBe('HW Champ')
+  })
+
+  it('falls back to the heavyweight champion when there are no upcoming events', async () => {
+    const t = convexTest(schema, modules)
+    await t.run(async (ctx) => {
+      await ctx.db.insert('fighters', fighter('HW Champ', {
+        weightClass: 'heavyweight', ranking: 0, photoUrl: 'hw.png',
+      }))
+      await ctx.db.insert('fighters', fighter('LW Champ', {
+        weightClass: 'lightweight', ranking: 0, photoUrl: 'lw.png',
+      }))
+    })
+
+    const featured = await t.query(api.fighters.getFeaturedFighter, {})
+    expect(featured?.name).toBe('HW Champ')
+  })
+
+  it('falls back to the lightweight champion when the heavyweight champion has no photo', async () => {
+    const t = convexTest(schema, modules)
+    await t.run(async (ctx) => {
+      await ctx.db.insert('fighters', fighter('HW Champ No Photo', {
+        weightClass: 'heavyweight', ranking: 0,
+      }))
+      await ctx.db.insert('fighters', fighter('LW Champ', {
+        weightClass: 'lightweight', ranking: 0, photoUrl: 'lw.png',
+      }))
+    })
+
+    const featured = await t.query(api.fighters.getFeaturedFighter, {})
+    expect(featured?.name).toBe('LW Champ')
   })
 })

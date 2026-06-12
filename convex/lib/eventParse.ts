@@ -39,11 +39,21 @@ export type CardTier = 'main' | 'prelim' | 'early_prelim'
 
 export interface ParsedBout {
   fighterASlug: string // always the known (red-corner) fighter
+  fighterAName?: string // display name as rendered on the card, diacritics intact
   fighterBSlug?: string // absent = TBA opponent not yet announced
+  fighterBName?: string
   weightClass: string // normalized bare key, e.g. "lightheavyweight"
   division: 'mens' | 'womens' // derived from the class label
   boutOrder: number // 1 = main event, ascending down the card
   cardTier: CardTier
+}
+
+function decodeEntities(s: string): string {
+  return s
+    .replace(/&amp;/g, '&')
+    .replace(/&#0?39;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&nbsp;/g, ' ')
 }
 
 // Collapses a UFC class label ("Women's Flyweight Title Bout") to a bare weight
@@ -82,6 +92,24 @@ export function parseEventCard(html: string): ParsedBout[] {
       )
     )?.[1]
 
+  // The corner-name block renders either given/family-name spans or the plain
+  // anchor text — both carry the true display name (diacritics intact), unlike
+  // the athlete slug.
+  const cornerName = (block: string, corner: 'red' | 'blue') => {
+    const div = block.match(
+      new RegExp(`corner-name--${corner}">([\\s\\S]*?)</div>`)
+    )?.[1]
+    if (!div) return undefined
+    const given = div.match(/corner-given-name">([^<]*)</)?.[1]
+    const family = div.match(/corner-family-name">([^<]*)</)?.[1]
+    const raw =
+      given || family
+        ? [given, family].filter(Boolean).join(' ')
+        : div.replace(/<[^>]+>/g, '')
+    const name = decodeEntities(raw).replace(/\s+/g, ' ').trim()
+    return name || undefined
+  }
+
   const parsed: Array<Omit<ParsedBout, 'cardTier'>> = []
   for (const block of blocks) {
     const fighterASlug = cornerSlug(block, 'red')
@@ -92,7 +120,9 @@ export function parseEventCard(html: string): ParsedBout[] {
 
     parsed.push({
       fighterASlug,
+      fighterAName: cornerName(block, 'red'),
       fighterBSlug: cornerSlug(block, 'blue'),
+      fighterBName: cornerName(block, 'blue'),
       weightClass: normalizeWeightClass(classLabel),
       division: /women/i.test(classLabel) ? 'womens' : 'mens',
       boutOrder: parsed.length + 1,
@@ -100,4 +130,23 @@ export function parseEventCard(html: string): ParsedBout[] {
   }
 
   return parsed.map((b) => ({ ...b, cardTier: tierForOrder(b.boutOrder, parsed.length) }))
+}
+
+export interface ParsedVenue {
+  venue: string // e.g. "T-Mobile Arena"
+  location: string // e.g. "Las Vegas, United States"
+}
+
+// Parses the venue block from an individual event page's hero. The field
+// renders as "Venue, \n Locality \n Country" in one div.
+export function parseEventVenue(html: string): ParsedVenue | undefined {
+  const m = html.match(/field--name-venue[^>]*>([\s\S]*?)<\/div>/)
+  if (!m) return undefined
+  const lines = decodeEntities(m[1].replace(/<[^>]+>/g, ''))
+    .split(/[\n,]/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+  if (lines.length === 0) return undefined
+  const [venue, ...rest] = lines
+  return { venue, location: rest.join(', ') }
 }

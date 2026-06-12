@@ -3,6 +3,7 @@ import { Card } from '@mantine/core'
 import { Link } from '@tanstack/react-router'
 import { formatWeightRange, type WeightClassDef } from '#/lib/weightClasses'
 import { gsap, useGSAP } from '#/lib/gsap'
+import { mantineTheme } from '#/lib/mantine'
 import classes from './WeightClassCard.module.css'
 
 interface WeightClassCardProps {
@@ -21,7 +22,7 @@ const SWEEP_SEGMENT = 0.18
 /** Seconds for one full clockwise lap of the perimeter. */
 const SWEEP_DURATION = 4
 /** Hover guard: skip the looping sweep on touch devices, small viewports, and for reduced-motion users. */
-const NO_HOVER = '(max-width: 48em), (hover: none), (prefers-reduced-motion: reduce)'
+export const NO_HOVER = `(max-width: ${mantineTheme.breakpoints!.sm}), (hover: none), (prefers-reduced-motion: reduce)`
 
 export default function WeightClassCard({
   division,

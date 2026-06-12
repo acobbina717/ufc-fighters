@@ -48,7 +48,7 @@ Bantamweight (left, tall) and Featherweight (right, tall) flank a center column 
 - **Base**: Mantine `Card`, `radius={0}`, full-bleed champion photo
 - **Label**: bottom-left overlay on a dark gradient — division name + weight range (e.g. "206 – 265 LBS")
 - **Frame Sweep**: SVG `<rect>` overlay. Perimeter is deterministic (`2 × (w + h)`), no arc geometry. Sweep + sheen run as one composed GSAP timeline — segment grows in, sweeps the perimeter, sheen fires as segment crosses center, both fade on leave.
-- **Scroll entry**: flanking sentinel cells (HW/LHW for men's, BW/FW for women's) animate in from left/right first; center column fills in after.
+- **Scroll entry**: flanking sentinel cells (HW/LHW for men's, BW/FW for women's) animate in from left/right first; center column fills in after. Deliberate deviation from issue #15: the initial hidden state is set inside the `gsap.matchMedia` desktop branch, **not** via CSS `opacity: 0` as the issue specified — pure-CSS hiding would leave mobile and reduced-motion users (where the entrance never runs) with invisible cards. `useGSAP` runs pre-paint, so there is no flash. Do not "fix" this back to CSS.
 - **Click**: GSAP Flip expand-to-fullscreen replacing the previous DOM clone hack.
 - **Division Toggle**: integrated as a section header directly above the grid (not a separate floating section).
 

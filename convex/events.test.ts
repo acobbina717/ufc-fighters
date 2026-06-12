@@ -2,6 +2,7 @@
 import { convexTest } from 'convex-test'
 import { describe, expect, it } from 'vitest'
 import { api } from './_generated/api'
+import type { Id } from './_generated/dataModel'
 import schema from './schema'
 
 const modules = import.meta.glob('./**/!(*.test).*s')
@@ -94,5 +95,100 @@ describe('getNextEvent', () => {
     const next = await t.query(api.events.getNextEvent, {})
     expect(next!.fighterA?.name).toBe('Solo')
     expect(next!.fighterB).toBeNull()
+  })
+})
+
+describe('upsertEvent', () => {
+  it('does not clobber an existing venue/location with empty strings', async () => {
+    const t = convexTest(schema, modules)
+    const eventId = await t.run(async (ctx) =>
+      ctx.db.insert('events', {
+        name: 'UFC 329', date: Date.now() + 24 * HOUR, slug: 'ufc-329',
+        venue: 'T-Mobile Arena', location: 'Las Vegas, United States', lastSynced: 0,
+      })
+    )
+
+    await t.mutation(api.events.upsertEvent, {
+      slug: 'ufc-329', name: 'UFC 329', date: Date.now() + 24 * HOUR,
+      venue: '', location: '', lastSynced: 1,
+    })
+
+    const event = await t.run(async (ctx) => ctx.db.get(eventId))
+    expect(event!.venue).toBe('T-Mobile Arena')
+    expect(event!.location).toBe('Las Vegas, United States')
+    expect(event!.lastSynced).toBe(1) // other fields still patched
+  })
+
+  it('updates venue/location when the scrape provides non-empty values', async () => {
+    const t = convexTest(schema, modules)
+    const eventId = await t.run(async (ctx) =>
+      ctx.db.insert('events', {
+        name: 'UFC 329', date: Date.now() + 24 * HOUR, slug: 'ufc-329',
+        venue: '', location: '', lastSynced: 0,
+      })
+    )
+
+    await t.mutation(api.events.upsertEvent, {
+      slug: 'ufc-329', name: 'UFC 329', date: Date.now() + 24 * HOUR,
+      venue: 'T-Mobile Arena', location: 'Las Vegas, United States', lastSynced: 1,
+    })
+
+    const event = await t.run(async (ctx) => ctx.db.get(eventId))
+    expect(event!.venue).toBe('T-Mobile Arena')
+    expect(event!.location).toBe('Las Vegas, United States')
+  })
+})
+
+describe('replaceEventBouts', () => {
+  function bout(fighterAId: Id<'fighters'>, boutOrder: number) {
+    return { fighterAId, weightClass: 'lightweight', cardTier: 'main' as const, boutOrder }
+  }
+
+  it('keeps the prior fuller bout set when an incomplete scrape would shrink it', async () => {
+    const t = convexTest(schema, modules)
+    const { eventId, a, b } = await t.run(async (ctx) => {
+      const a = await ctx.db.insert('fighters', fighter('A'))
+      const b = await ctx.db.insert('fighters', fighter('B'))
+      const eventId = await ctx.db.insert('events', {
+        name: 'UFC 330', date: Date.now() + 24 * HOUR, venue: '', location: '', slug: 'ufc-330', lastSynced: 0,
+      })
+      await ctx.db.insert('bouts', { eventId, fighterAId: a, weightClass: 'lightweight', cardTier: 'main', boutOrder: 1 })
+      await ctx.db.insert('bouts', { eventId, fighterAId: b, weightClass: 'lightweight', cardTier: 'main', boutOrder: 2 })
+      return { eventId, a, b }
+    })
+
+    await t.mutation(api.events.replaceEventBouts, {
+      eventId, bouts: [bout(a, 1)], incomplete: true,
+    })
+
+    const bouts = await t.run(async (ctx) =>
+      ctx.db.query('bouts').withIndex('by_event', (q) => q.eq('eventId', eventId)).collect()
+    )
+    expect(bouts).toHaveLength(2)
+    expect(bouts.map((x) => x.fighterAId).sort()).toEqual([a, b].sort())
+  })
+
+  it('replaces the bout set when the scrape is complete', async () => {
+    const t = convexTest(schema, modules)
+    const { eventId, a } = await t.run(async (ctx) => {
+      const a = await ctx.db.insert('fighters', fighter('A'))
+      const b = await ctx.db.insert('fighters', fighter('B'))
+      const eventId = await ctx.db.insert('events', {
+        name: 'UFC 331', date: Date.now() + 24 * HOUR, venue: '', location: '', slug: 'ufc-331', lastSynced: 0,
+      })
+      await ctx.db.insert('bouts', { eventId, fighterAId: a, weightClass: 'lightweight', cardTier: 'main', boutOrder: 1 })
+      await ctx.db.insert('bouts', { eventId, fighterAId: b, weightClass: 'lightweight', cardTier: 'main', boutOrder: 2 })
+      return { eventId, a }
+    })
+
+    await t.mutation(api.events.replaceEventBouts, {
+      eventId, bouts: [bout(a, 1)],
+    })
+
+    const bouts = await t.run(async (ctx) =>
+      ctx.db.query('bouts').withIndex('by_event', (q) => q.eq('eventId', eventId)).collect()
+    )
+    expect(bouts).toHaveLength(1)
+    expect(bouts[0].fighterAId).toBe(a)
   })
 })

@@ -59,7 +59,14 @@ export const upsertEvent = mutation({
       .first()
 
     if (existing) {
-      await ctx.db.patch(existing._id, args)
+      // Never clobber a known venue/location with a scrape that came back empty —
+      // the cron runs daily and would otherwise wipe manual backfills.
+      const { venue, location, ...rest } = args
+      await ctx.db.patch(existing._id, {
+        ...rest,
+        ...(venue ? { venue } : {}),
+        ...(location ? { location } : {}),
+      })
       return existing._id
     }
     return await ctx.db.insert('events', args)
@@ -81,12 +88,16 @@ export const replaceEventBouts = mutation({
         boutOrder: v.number(),
       })
     ),
+    // True when the scraper had to skip bouts (transient fetch failures). An
+    // incomplete set must not replace a fuller previously-stored card.
+    incomplete: v.optional(v.boolean()),
   },
-  handler: async (ctx, { eventId, bouts }) => {
+  handler: async (ctx, { eventId, bouts, incomplete }) => {
     const existing = await ctx.db
       .query('bouts')
       .withIndex('by_event', (q) => q.eq('eventId', eventId))
       .collect()
+    if (incomplete && existing.length > bouts.length) return existing.length
     for (const b of existing) await ctx.db.delete(b._id)
 
     for (const b of bouts) await ctx.db.insert('bouts', { eventId, ...b })

@@ -66,7 +66,7 @@
   50%       { opacity: 0.7; box-shadow: 0 0 0 5px rgba(210, 10, 10, 0); }
 }
 
-@media (max-width: 48em) {
+@media (max-width: $mantine-breakpoint-sm) {
   .segment {
     padding: 10px 20px;
     font-size: 12px;
