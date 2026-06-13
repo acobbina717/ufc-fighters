@@ -264,6 +264,40 @@ describe('getNextEventCard', () => {
     })
   })
 
+  it('joins each fighter country onto its corner when on record', async () => {
+    const t = convexTest(schema, modules)
+    await t.run(async (ctx) => {
+      const a = await ctx.db.insert('fighters', fighter('Country A', { country: 'Georgia' }))
+      const b = await ctx.db.insert('fighters', fighter('Country B', { country: 'Brazil' }))
+      const eventId = await ctx.db.insert('events', {
+        name: 'UFC 344', date: Date.now() + 24 * HOUR, venue: '', location: '', slug: 'ufc-344', lastSynced: 0,
+      })
+      await ctx.db.insert('bouts', { eventId, fighterAId: a, fighterBId: b, weightClass: 'lightweight', cardTier: 'prelim', boutOrder: 4 })
+    })
+
+    const card = await t.query(api.events.getNextEventCard, {})
+    expect(card!.bouts[0]).toMatchObject({
+      fighterACountry: 'Georgia',
+      fighterBCountry: 'Brazil',
+    })
+  })
+
+  it('yields a null country for a TBA corner and for a fighter with no country on file', async () => {
+    const t = convexTest(schema, modules)
+    await t.run(async (ctx) => {
+      // fighterA named but no country; fighterB TBA (absent)
+      const a = await ctx.db.insert('fighters', fighter('No Country'))
+      const eventId = await ctx.db.insert('events', {
+        name: 'UFC 345', date: Date.now() + 24 * HOUR, venue: '', location: '', slug: 'ufc-345', lastSynced: 0,
+      })
+      await ctx.db.insert('bouts', { eventId, fighterAId: a, weightClass: 'lightweight', cardTier: 'prelim', boutOrder: 5 })
+    })
+
+    const card = await t.query(api.events.getNextEventCard, {})
+    expect(card!.bouts[0].fighterACountry).toBeNull()
+    expect(card!.bouts[0].fighterBCountry).toBeNull()
+  })
+
   it('yields a null photo for a TBA corner and for a named fighter with no photo on file', async () => {
     const t = convexTest(schema, modules)
     await t.run(async (ctx) => {

@@ -39,8 +39,9 @@ export const getNextEvent = query({
 // Card Chapter's typographic ledger (issue #30). Returns the raw bout list —
 // main-event exclusion and tier grouping are the client's pure helper's job
 // (src/lib/cardLedger.ts). fighterBName is null when the opponent is TBA.
-// Each corner also carries a photo ref for the Corner Thumbnail (ADR 0009);
-// null for a TBA corner and for a fighter with no photo on file.
+// Each corner also carries a photo ref for the Corner Thumbnail (ADR 0009) and
+// the fighter's country for the Country Flag Row (issue #45); both null for a
+// TBA corner and for a fighter with no photo / country on file.
 // Returns null when there are no upcoming events.
 export const getNextEventCard = query({
   args: {},
@@ -74,6 +75,8 @@ export const getNextEventCard = query({
         fighterBName: fighterB?.name ?? null,
         fighterAPhotoUrl: fighterA.photoUrl ?? null,
         fighterBPhotoUrl: fighterB?.photoUrl ?? null,
+        fighterACountry: fighterA.country ?? null,
+        fighterBCountry: fighterB?.country ?? null,
       })
     }
     card.sort((a, b) => a.boutOrder - b.boutOrder)

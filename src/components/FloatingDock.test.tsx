@@ -28,6 +28,9 @@ vi.mock('@tanstack/react-router', () => ({
   },
 }))
 
+// The dock starts collapsed unless the user has opened it this session (#44).
+const DOCK_OPEN_KEY = 'dock-open'
+
 function renderDock(pathname = '/') {
   route.current = pathname
   return render(
@@ -35,6 +38,11 @@ function renderDock(pathname = '/') {
       <FloatingDock />
     </MantineProvider>,
   )
+}
+
+// Most behaviour lives behind the expanded pill; open it first.
+function expandDock() {
+  fireEvent.click(screen.getByRole('button', { name: 'Expand navigation' }))
 }
 
 // Mirrors the root provider setup (ADR 0006): the shared localStorage manager
@@ -57,6 +65,7 @@ afterEach(() => {
   cleanup()
   // Mantine persists the user's explicit scheme choice — reset between tests.
   window.localStorage.clear()
+  window.sessionStorage.clear()
   document.documentElement.setAttribute('data-mantine-color-scheme', 'light')
 })
 
@@ -66,30 +75,44 @@ describe('FloatingDock', () => {
     expect(screen.getByRole('navigation', { name: 'Site navigation' })).toBeTruthy()
   })
 
-  it('links to Experience, Fighters, and Matchup', () => {
+  it('links to Home, Fighters, and Matchup when expanded', () => {
     renderDock()
-    expect(screen.getByRole('link', { name: 'Experience' }).getAttribute('href')).toBe('/')
+    expandDock()
+    expect(screen.getByRole('link', { name: 'Home' }).getAttribute('href')).toBe('/')
     expect(screen.getByRole('link', { name: 'Fighters' }).getAttribute('href')).toBe('/fighters')
     expect(screen.getByRole('link', { name: 'Matchup' }).getAttribute('href')).toBe('/matchup')
   })
 
+  it('renders the Home link as an icon (aria-label), never the word "Experience"', () => {
+    renderDock()
+    expandDock()
+    const home = screen.getByRole('link', { name: 'Home' })
+    expect(home.textContent).toBe('') // icon only, no text label
+    expect(home.querySelector('svg')).toBeTruthy()
+    expect(screen.queryByText('Experience')).toBeNull()
+  })
+
   it('marks the current route active (Fighters)', () => {
     renderDock('/fighters')
+    expandDock()
     const fighters = screen.getByRole('link', { name: 'Fighters' })
     expect(fighters.getAttribute('data-active')).toBe('true')
     expect(fighters.getAttribute('aria-current')).toBe('page')
     expect(screen.getByRole('link', { name: 'Matchup' }).getAttribute('data-active')).toBeNull()
   })
 
-  it('marks Experience active only on the exact root path', () => {
+  it('marks Home active only on the exact root path', () => {
     renderDock('/')
+    expandDock()
     expect(
-      screen.getByRole('link', { name: 'Experience' }).getAttribute('data-active'),
+      screen.getByRole('link', { name: 'Home' }).getAttribute('data-active'),
     ).toBe('true')
     cleanup()
+    window.sessionStorage.clear()
     renderDock('/fighters')
+    expandDock()
     expect(
-      screen.getByRole('link', { name: 'Experience' }).getAttribute('data-active'),
+      screen.getByRole('link', { name: 'Home' }).getAttribute('data-active'),
     ).toBeNull()
   })
 
@@ -102,17 +125,51 @@ describe('FloatingDock', () => {
     expect(document.documentElement.getAttribute('data-mantine-color-scheme')).toBe('light')
   })
 
-  it('collapses to a single control and expands back', () => {
+  it('renders collapsed by default — color toggle and hamburger only, no links', () => {
     renderDock()
-    fireEvent.click(screen.getByRole('button', { name: 'Collapse navigation' }))
     expect(screen.queryByRole('link')).toBeNull()
-    expect(screen.queryByRole('button', { name: 'Toggle color scheme' })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Toggle color scheme' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Expand navigation' })).toBeTruthy()
+  })
 
+  it('keeps the color-scheme toggle visible in both collapsed and expanded states', () => {
+    renderDock()
+    expect(screen.getByRole('button', { name: 'Toggle color scheme' })).toBeTruthy()
+    expandDock()
+    expect(screen.getByRole('button', { name: 'Toggle color scheme' })).toBeTruthy()
+  })
+
+  it('shows the hamburger when collapsed and the ✕ when expanded — never both', () => {
+    renderDock()
     const expand = screen.getByRole('button', { name: 'Expand navigation' })
     expect(expand.getAttribute('aria-expanded')).toBe('false')
+    expect(screen.queryByRole('button', { name: 'Collapse navigation' })).toBeNull()
+
     fireEvent.click(expand)
     expect(screen.getAllByRole('link').length).toBe(3)
-    expect(screen.getByRole('button', { name: 'Toggle color scheme' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Collapse navigation' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Expand navigation' })).toBeNull()
+  })
+
+  it('renders collapsed on first visit (no sessionStorage entry)', () => {
+    renderDock()
+    expect(screen.queryByRole('link')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Expand navigation' })).toBeTruthy()
+  })
+
+  it('renders expanded on mount when the session recorded an open dock', () => {
+    window.sessionStorage.setItem(DOCK_OPEN_KEY, 'true')
+    renderDock()
+    expect(screen.getAllByRole('link').length).toBe(3)
+    expect(screen.getByRole('button', { name: 'Collapse navigation' })).toBeTruthy()
+  })
+
+  it('writes the new open/closed state to sessionStorage on every toggle', () => {
+    renderDock()
+    fireEvent.click(screen.getByRole('button', { name: 'Expand navigation' }))
+    expect(window.sessionStorage.getItem(DOCK_OPEN_KEY)).toBe('true')
+    fireEvent.click(screen.getByRole('button', { name: 'Collapse navigation' }))
+    expect(window.sessionStorage.getItem(DOCK_OPEN_KEY)).toBe('false')
   })
 
   it('persists an explicit toggle choice to localStorage (ADR 0006)', () => {
@@ -131,6 +188,7 @@ describe('FloatingDock', () => {
 
   it('uses real links and buttons, so every item is keyboard operable', () => {
     const { container } = renderDock()
+    expandDock()
     // No click-handler divs: interactive elements are native <a> and <button>.
     expect(container.querySelectorAll('a').length).toBe(3)
     expect(container.querySelectorAll('button').length).toBe(2)
@@ -143,6 +201,33 @@ describe('FloatingDock', () => {
 const experienceViewSource = readFileSync('src/components/experience/ExperienceView.tsx', 'utf8')
 const rootRouteSource = readFileSync('src/routes/__root.tsx', 'utf8')
 const dockCss = readFileSync('src/components/FloatingDock.module.css', 'utf8')
+const dockSource = readFileSync('src/components/FloatingDock.tsx', 'utf8')
+
+// The expand/collapse stagger is GSAP-driven and time-based — jsdom can't
+// exercise it, so assert the wiring against the source, per the #30 pattern.
+describe('FloatingDock expand/collapse animation (#46)', () => {
+  it('imports GSAP only from the shared registry, never the raw package', () => {
+    expect(dockSource).toContain("from '#/lib/gsap'")
+    expect(dockSource).not.toMatch(/from ['"]gsap['"]/)
+  })
+
+  it('staggers the links in left-to-right on expand: x: 12 → 0, 60ms stagger', () => {
+    expect(dockSource).toContain('x: 12')
+    expect(dockSource).toContain('stagger: 0.06')
+  })
+
+  it('reverses the stagger on collapse (right-to-left) before unmounting', () => {
+    expect(dockSource).toContain("from: 'end'")
+  })
+
+  it('respects reduced motion via the Mantine hook — no stagger, instant show/hide', () => {
+    expect(dockSource).toContain('useReducedMotion')
+  })
+
+  it('tags each link so the stagger can target them', () => {
+    expect(dockSource).toContain('data-dock-link')
+  })
+})
 
 describe('FloatingDock site integration (#23)', () => {
   it('absorbs the Experience route standalone Sun/Moon toggle (removed)', () => {
@@ -159,6 +244,13 @@ describe('FloatingDock site integration (#23)', () => {
 
   it('indicates the active route in the brand-interactive red token (ADR 0008)', () => {
     expect(dockCss).toContain('var(--mantine-color-ufcRed-6)')
+  })
+
+  it('anchors to the top-right, not centered (#44)', () => {
+    expect(dockCss).toContain('right: var(--mantine-spacing-lg)')
+    // No horizontal centering left over from the former top-center position.
+    expect(dockCss).not.toContain('translateX(-50%)')
+    expect(dockCss).not.toMatch(/left:\s*50%/)
   })
 })
 

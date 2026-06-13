@@ -1,11 +1,10 @@
-/* Floating Dock — compact pill, top-center (header-like), above the experience
-   film grain (z 100) and the former floating toggle layer (z 200). Mode-aware
-   via light-dark(); all values reference Mantine tokens. */
+/* Floating Dock — compact pill, top-right (#44), above the experience film
+   grain (z 100) and the former floating toggle layer (z 200). Mode-aware via
+   light-dark(); all values reference Mantine tokens. */
 .dock {
   position: fixed;
   top: var(--mantine-spacing-lg);
-  left: 50%;
-  transform: translateX(-50%);
+  right: var(--mantine-spacing-lg);
   z-index: 300;
   display: flex;
   align-items: center;

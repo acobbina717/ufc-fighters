@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest'
 import {
   boutWeightClassLabel,
   cornerDisplay,
+  countryFlag,
   groupBoutsByTier,
   TIER_LABELS,
   type LedgerBout,
@@ -20,6 +21,8 @@ function bout(overrides: Partial<LedgerBout> = {}): LedgerBout {
     fighterBName: 'B Fighter',
     fighterAPhotoUrl: 'https://ufc.com/a.png',
     fighterBPhotoUrl: 'https://ufc.com/b.png',
+    fighterACountry: 'United States',
+    fighterBCountry: 'Brazil',
     ...overrides,
   }
 }
@@ -89,6 +92,19 @@ describe('groupBoutsByTier', () => {
     expect(sections[0].bouts[0].fighterBPhotoUrl).toBeNull()
   })
 
+  it('carries corner countries through grouping for both present and null cases', () => {
+    const sections = groupBoutsByTier([
+      bout({
+        boutOrder: 2,
+        cardTier: 'main',
+        fighterACountry: 'Georgia',
+        fighterBCountry: null, // opponent with no country / TBA
+      }),
+    ])
+    expect(sections[0].bouts[0].fighterACountry).toBe('Georgia')
+    expect(sections[0].bouts[0].fighterBCountry).toBeNull()
+  })
+
   it('labels every tier per the fight-poster vocabulary', () => {
     expect(TIER_LABELS).toEqual({
       main: 'MAIN CARD',
@@ -109,6 +125,23 @@ describe('cornerDisplay', () => {
 
   it('renders TBA for a blank name', () => {
     expect(cornerDisplay('   ')).toBe('TBA')
+  })
+})
+
+describe('countryFlag', () => {
+  it('maps full country names to their Unicode flag emoji', () => {
+    expect(countryFlag('United States')).toBe('🇺🇸')
+    expect(countryFlag('Brazil')).toBe('🇧🇷')
+    expect(countryFlag('Georgia')).toBe('🇬🇪')
+    expect(countryFlag('Russia')).toBe('🇷🇺')
+  })
+
+  it('returns null for a null country (TBA / none on file)', () => {
+    expect(countryFlag(null)).toBeNull()
+  })
+
+  it('returns null for a country with no flag mapping rather than throwing', () => {
+    expect(countryFlag('Wakanda')).toBeNull()
   })
 })
 

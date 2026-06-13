@@ -18,7 +18,7 @@
   /* Wider on large viewports so the ledger uses the real estate rather than
      stranding a narrow strip in a sea of whitespace; still centered and capped
      so line lengths stay poster-like. */
-  max-width: min(1120px, 92vw);
+  max-width: min(1320px, 94vw);
   margin: 0 auto;
 }
 
@@ -110,19 +110,20 @@
 .matchup {
   display: flex;
   align-items: center;
+  justify-content: center;
   flex-wrap: wrap;
-  column-gap: clamp(12px, 1.6vw, 20px);
+  column-gap: clamp(16px, 2vw, 28px);
   row-gap: 2px;
   margin: 0;
 }
 
-/* A corner = its Thumbnail glued to its name, so the pair stays together when
-   the row wraps. The closing corner mirrors the order (name then thumbnail) for
-   the "□ NAME vs NAME □" symmetry. */
+/* A corner = its photo-column (Thumbnail above its Country Flag Row) glued to
+   its name, so the pair stays together when the row wraps. The closing corner
+   mirrors the order (name then photo-column) for "□ NAME vs NAME □" symmetry. */
 .corner {
   display: flex;
   align-items: center;
-  gap: clamp(10px, 1.2vw, 16px);
+  gap: clamp(12px, 1.4vw, 20px);
   min-width: 0;
 }
 
@@ -130,20 +131,45 @@
   flex-direction: row-reverse;
 }
 
+/* Photo-column — the Corner Thumbnail stacked above its Country Flag Row. */
+.photoCol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Country Flag Row (issue #45) — neutral chrome (never an accent), the same
+   quiet register as the weight-class label. Absent entirely when no country. */
+.flagRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mantine-font-family-headings);
+  font-weight: 700;
+  font-size: clamp(10px, 0.9vw, 13px);
+  letter-spacing: 0.18em;
+  color: light-dark(rgba(0, 0, 0, 0.5), rgba(255, 255, 255, 0.5));
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.flag {
+  /* Emoji renders at the font's color/size; nudge up so it reads beside the
+     small uppercase label without dominating it. */
+  font-size: 1.15em;
+  line-height: 1;
+}
+
 /* Corner Thumbnail (ADR 0009) — sharp square (radius={0}), full color, a
    downscaled head/shoulder crop of the full-body source (never upscaled).
    --avatar-size overrides Mantine's Avatar sizing token so the square can
-   scale fluidly with the row.
-
-   A neutral hairline frame + mode-aware backstop (ADR 0008 carve-out: this is
-   chrome around photographic content, never an accent) does two jobs: it reads
-   mismatched, differently-lit source photos as one consistent set, and it gives
-   the silhouette fallback a defined square instead of a floating icon. */
+   scale fluidly with the row. No frame or backstop (issue #45): the source PNGs
+   are transparent and sit directly against the chapter background. */
 .thumb {
-  --avatar-size: clamp(40px, 4.6vw, 84px);
+  --avatar-size: clamp(56px, 6vw, 120px);
   flex-shrink: 0;
-  border: 1px solid light-dark(rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.12));
-  background: light-dark(rgba(0, 0, 0, 0.04), rgba(255, 255, 255, 0.06));
 }
 
 .thumbImage {
@@ -162,7 +188,7 @@
 .fighter {
   font-family: var(--mantine-font-family-headings);
   font-weight: 800;
-  font-size: clamp(24px, 3.4vw, 52px);
+  font-size: clamp(28px, 4vw, 64px);
   line-height: 1.05;
   letter-spacing: 0.01em;
   color: light-dark(rgba(0, 0, 0, 0.88), rgba(255, 255, 255, 0.88));
@@ -183,37 +209,69 @@
 .tba {
   font-family: var(--mantine-font-family-headings);
   font-weight: 800;
-  font-size: clamp(24px, 3.4vw, 52px);
+  font-size: clamp(28px, 4vw, 64px);
   line-height: 1.05;
   letter-spacing: 0.06em;
   color: light-dark(rgba(0, 0, 0, 0.3), rgba(255, 255, 255, 0.3));
   text-transform: uppercase;
 }
 
-/* Single-line "□ NAME vs NAME □" needs real width; below md it gets cramped, so
-   stack the matchup into a clean vertical "□ NAME / vs / □ NAME" list. */
-@mixin smaller-than md {
+/* The single-line "□ NAME vs NAME □" needs real width; below md it gets cramped.
+   Re-flow into a 3-column grid: photo-columns flank the names, which stack down
+   the center as "NAME A / vs / NAME B". display: contents lifts each corner's
+   photo-column and name out to become direct grid items so they can be placed
+   into the side and center tracks independently of their corner grouping.
+   Raw @media (Mantine md = 62em) — this project has no postcss-preset-mantine,
+   so @mixin at-rules are dropped silently; plain @media is the working idiom. */
+@media (max-width: 62em) {
   .matchup {
-    flex-direction: column;
-    align-items: flex-start;
-    column-gap: 0;
-    row-gap: clamp(8px, 1.4vh, 14px);
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    justify-content: stretch;
+    column-gap: clamp(12px, 3.5vw, 24px);
+    row-gap: clamp(6px, 1.4vh, 12px);
   }
 
-  /* Stacked, the mirror reads awkwardly (NAME □ under □ NAME); un-mirror so both
-     corners read "□ NAME" as a clean vertical list. */
-  .cornerEnd {
-    flex-direction: row;
+  .corner {
+    display: contents;
   }
 
-  /* The vs mark sits on its own line between the two corners — pull it inline
-     with the thumbnails' left edge so the column reads as one ledger entry. */
+  /* Opening corner: photo-column on the left, name in the center top. */
+  .corner:not(.cornerEnd) .photoCol {
+    grid-column: 1;
+    grid-row: 1 / span 3;
+  }
+
+  .corner:not(.cornerEnd) .fighter,
+  .corner:not(.cornerEnd) .tba {
+    grid-column: 2;
+    grid-row: 1;
+    text-align: center;
+  }
+
+  /* vs on its own center line between the two names. */
   .vs {
-    padding-left: calc(clamp(40px, 4.6vw, 84px) + clamp(10px, 1.2vw, 16px));
+    grid-column: 2;
+    grid-row: 2;
+    text-align: center;
+  }
+
+  /* Closing corner: name center bottom, photo-column on the right. */
+  .cornerEnd .fighter,
+  .cornerEnd .tba {
+    grid-column: 2;
+    grid-row: 3;
+    text-align: center;
+  }
+
+  .cornerEnd .photoCol {
+    grid-column: 3;
+    grid-row: 1 / span 3;
   }
 }
 
-@mixin smaller-than sm {
+@media (max-width: 48em) {
   .chapter {
     padding-top: 72px;
     padding-bottom: 72px;

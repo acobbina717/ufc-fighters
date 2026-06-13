@@ -20,6 +20,10 @@ export interface LedgerBout {
   fighterAPhotoUrl: string | null
   /** Corner Thumbnail source (ADR 0009); null = TBA corner or no photo on file. */
   fighterBPhotoUrl: string | null
+  /** Country Flag Row source (issue #45); null = TBA corner or no country on file. */
+  fighterACountry: string | null
+  /** Country Flag Row source (issue #45); null = TBA corner or no country on file. */
+  fighterBCountry: string | null
 }
 
 export interface TierSection {
@@ -72,6 +76,111 @@ export function cornerDisplay(name: string | null): string {
 export function boutWeightClassLabel(weightClass: string, division: Division): string {
   const label = DIVISION_LABELS[`${division}-${weightClass}`]
   return label ?? weightClass.toUpperCase()
+}
+
+/**
+ * Country Flag Row source (issue #45): the Unicode flag emoji for a fighter's
+ * country of record, or null when there is no country (TBA / none on file) or
+ * no mapping for it. Keyed on the full English country name UFC.com uses
+ * (e.g. "United States", "Georgia"). Dependency-free — the emoji is derived
+ * from the ISO 3166-1 alpha-2 code's two Regional Indicator code points, with
+ * a small carve-out for the UK home nations (subdivision tag flags).
+ */
+export function countryFlag(country: string | null): string | null {
+  if (!country) return null
+  const subdivision = SUBDIVISION_FLAGS[country]
+  if (subdivision) return subdivision
+  const code = COUNTRY_ISO[country]
+  if (!code) return null
+  // 'A' (0x41) → Regional Indicator Symbol Letter A (0x1F1E6); offset 0x1F1A5.
+  return String.fromCodePoint(
+    ...[...code].map((c) => 0x1f1a5 + c.charCodeAt(0)),
+  )
+}
+
+// Full English country name → ISO 3166-1 alpha-2. Covers the nations that
+// regularly appear on a UFC card; an unmapped country simply renders no flag.
+const COUNTRY_ISO: Record<string, string> = {
+  'United States': 'US',
+  Brazil: 'BR',
+  Russia: 'RU',
+  Canada: 'CA',
+  Mexico: 'MX',
+  Australia: 'AU',
+  'New Zealand': 'NZ',
+  Ireland: 'IE',
+  'United Kingdom': 'GB',
+  Poland: 'PL',
+  Georgia: 'GE',
+  France: 'FR',
+  Germany: 'DE',
+  Netherlands: 'NL',
+  Sweden: 'SE',
+  Norway: 'NO',
+  Finland: 'FI',
+  Denmark: 'DK',
+  Spain: 'ES',
+  Italy: 'IT',
+  Portugal: 'PT',
+  Switzerland: 'CH',
+  Austria: 'AT',
+  Belgium: 'BE',
+  Croatia: 'HR',
+  Serbia: 'RS',
+  Czechia: 'CZ',
+  'Czech Republic': 'CZ',
+  Slovakia: 'SK',
+  Lithuania: 'LT',
+  Moldova: 'MD',
+  Ukraine: 'UA',
+  Belarus: 'BY',
+  Turkey: 'TR',
+  Greece: 'GR',
+  Iceland: 'IS',
+  China: 'CN',
+  Japan: 'JP',
+  'South Korea': 'KR',
+  Thailand: 'TH',
+  Philippines: 'PH',
+  Singapore: 'SG',
+  India: 'IN',
+  Indonesia: 'ID',
+  Kazakhstan: 'KZ',
+  Kyrgyzstan: 'KG',
+  Uzbekistan: 'UZ',
+  Tajikistan: 'TJ',
+  Azerbaijan: 'AZ',
+  Armenia: 'AM',
+  Iran: 'IR',
+  Iraq: 'IQ',
+  Jordan: 'JO',
+  Bahrain: 'BH',
+  Israel: 'IL',
+  'South Africa': 'ZA',
+  Nigeria: 'NG',
+  Cameroon: 'CM',
+  'Democratic Republic of the Congo': 'CD',
+  Angola: 'AO',
+  Suriname: 'SR',
+  Argentina: 'AR',
+  Chile: 'CL',
+  Peru: 'PE',
+  Ecuador: 'EC',
+  Colombia: 'CO',
+  Venezuela: 'VE',
+  Bolivia: 'BO',
+  Panama: 'PA',
+  Cuba: 'CU',
+  'Dominican Republic': 'DO',
+  Jamaica: 'JM',
+}
+
+// UK home nations carry their own subdivision tag-sequence flags rather than
+// the Union Jack — common enough on a UFC card to be worth the carve-out.
+const SUBDIVISION_FLAGS: Record<string, string> = {
+  England: '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
+  Scotland: '🏴󠁧󠁢󠁳󠁣󠁴󠁿',
+  Wales: '🏴󠁧󠁢󠁷󠁬󠁳󠁿',
 }
 
 // Derived by hand from src/lib/weightClasses.ts slugs — kept local so this

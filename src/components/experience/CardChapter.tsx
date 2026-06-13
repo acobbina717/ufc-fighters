@@ -12,6 +12,7 @@ import { useStableQuery } from '#/hooks/useStableQuery'
 import {
   boutWeightClassLabel,
   cornerDisplay,
+  countryFlag,
   groupBoutsByTier,
 } from '#/lib/cardLedger'
 import { gsap, ScrollTrigger, useGSAP, scheduleScrollTriggerRefresh } from '#/lib/gsap'
@@ -95,39 +96,18 @@ export default function CardChapter() {
                     {boutWeightClassLabel(bout.weightClass, bout.division)} BOUT
                   </span>
                   <div className={classes.matchup}>
-                    <span className={classes.corner}>
-                      <Avatar
-                        src={bout.fighterAPhotoUrl}
-                        alt=""
-                        aria-hidden="true"
-                        radius={0}
-                        className={classes.thumb}
-                        classNames={{
-                          image: classes.thumbImage,
-                          placeholder: classes.thumbPlaceholder,
-                        }}
-                      />
-                      <span className={classes.fighter}>
-                        {cornerDisplay(bout.fighterAName)}
-                      </span>
-                    </span>
+                    <Corner
+                      name={bout.fighterAName}
+                      photoUrl={bout.fighterAPhotoUrl}
+                      country={bout.fighterACountry}
+                    />
                     <span className={classes.vs}>vs</span>
-                    <span className={`${classes.corner} ${classes.cornerEnd}`}>
-                      <span className={bout.fighterBName ? classes.fighter : classes.tba}>
-                        {cornerDisplay(bout.fighterBName)}
-                      </span>
-                      <Avatar
-                        src={bout.fighterBPhotoUrl}
-                        alt=""
-                        aria-hidden="true"
-                        radius={0}
-                        className={classes.thumb}
-                        classNames={{
-                          image: classes.thumbImage,
-                          placeholder: classes.thumbPlaceholder,
-                        }}
-                      />
-                    </span>
+                    <Corner
+                      name={bout.fighterBName}
+                      photoUrl={bout.fighterBPhotoUrl}
+                      country={bout.fighterBCountry}
+                      reversed
+                    />
                   </div>
                 </li>
               ))}
@@ -136,5 +116,69 @@ export default function CardChapter() {
         ))}
       </div>
     </section>
+  )
+}
+
+// One corner of a bout: a photo-column (Corner Thumbnail stacked above its
+// Country Flag Row) with the fighter name beside it (issue #45). The closing
+// corner is `reversed` — name then photo-column in source order, mirrored on
+// desktop via CSS so the photos flank the names. The flag row is absent
+// entirely when the fighter has no country on record (TBA / none on file).
+function Corner({
+  name,
+  photoUrl,
+  country,
+  reversed,
+}: {
+  name: string | null
+  photoUrl: string | null
+  country: string | null
+  reversed?: boolean
+}) {
+  const flag = countryFlag(country)
+  const photoCol = (
+    <span className={classes.photoCol} data-photo-col>
+      <Avatar
+        src={photoUrl}
+        alt=""
+        aria-hidden="true"
+        radius={0}
+        className={classes.thumb}
+        classNames={{
+          image: classes.thumbImage,
+          placeholder: classes.thumbPlaceholder,
+        }}
+      />
+      {country && (
+        <span className={classes.flagRow} data-flag-row>
+          {flag && (
+            <span className={classes.flag} aria-hidden="true">
+              {flag}
+            </span>
+          )}
+          <span className={classes.flagName}>{country.toUpperCase()}</span>
+        </span>
+      )}
+    </span>
+  )
+  const nameEl = (
+    <span className={name ? classes.fighter : classes.tba}>
+      {cornerDisplay(name)}
+    </span>
+  )
+  return (
+    <span className={`${classes.corner}${reversed ? ` ${classes.cornerEnd}` : ''}`}>
+      {reversed ? (
+        <>
+          {nameEl}
+          {photoCol}
+        </>
+      ) : (
+        <>
+          {photoCol}
+          {nameEl}
+        </>
+      )}
+    </span>
   )
 }

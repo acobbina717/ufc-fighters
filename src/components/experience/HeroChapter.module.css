@@ -1,14 +1,13 @@
 .hero {
   position: relative;
   height: 100svh;
-  background:
-    radial-gradient(ellipse at 15% 65%, rgba(210, 10, 10, 0.18) 0%, transparent 50%),
-    light-dark(#fff, #000);
+  background: light-dark(#fff, #000);
   overflow: hidden;
   transition: background 0.3s ease;
 }
 
-/* Fighter silhouette — desaturated, fades into the background */
+/* Fighter PNG — sits clean against the base; the mask softens its left edge,
+   the GSAP timeline fades the whole frame out as the scroll enters Act 2. */
 .silhouette {
   position: absolute;
   right: 0;
@@ -25,8 +24,6 @@
   height: 100%;
   object-fit: contain;
   object-position: bottom right;
-  filter: grayscale(1) contrast(1.25) brightness(light-dark(0.9, 0.5));
-  mix-blend-mode: light-dark(multiply, luminosity);
 }
 
 /* Vertical press pass */

@@ -40,6 +40,8 @@ function bout(overrides: Partial<LedgerBout> = {}): LedgerBout {
     fighterBName: 'B Fighter',
     fighterAPhotoUrl: 'https://ufc.com/a.png',
     fighterBPhotoUrl: 'https://ufc.com/b.png',
+    fighterACountry: 'United States',
+    fighterBCountry: 'Brazil',
     ...overrides,
   }
 }
@@ -179,6 +181,61 @@ describe('CardChapter Corner Thumbnails (#39 / ADR 0009)', () => {
     })
     container.querySelectorAll('.mantine-Avatar-root').forEach((root) => {
       expect(root.getAttribute('aria-hidden')).toBe('true')
+    })
+  })
+})
+
+describe('CardChapter Country Flag Rows (#45)', () => {
+  it('renders a flag emoji + uppercase country below each corner that has a country', () => {
+    renderChapter({
+      eventName: 'UFC 360',
+      bouts: [
+        bout({ boutOrder: 2, fighterACountry: 'United States', fighterBCountry: 'Georgia' }),
+      ],
+    })
+    expect(screen.getByText('UNITED STATES')).toBeTruthy()
+    expect(screen.getByText('GEORGIA')).toBeTruthy()
+    expect(screen.getByText('🇺🇸')).toBeTruthy()
+    expect(screen.getByText('🇬🇪')).toBeTruthy()
+  })
+
+  it('renders no flag row for a corner whose country is null', () => {
+    const { container } = renderChapter({
+      eventName: 'UFC 361',
+      bouts: [bout({ boutOrder: 2, fighterACountry: 'Brazil', fighterBCountry: null })],
+    })
+    expect(screen.getByText('BRAZIL')).toBeTruthy()
+    // Only the A corner has a country — exactly one flag row, no empty placeholder.
+    expect(container.querySelectorAll('[data-flag-row]')).toHaveLength(1)
+  })
+
+  it('renders no flag row for a TBA corner', () => {
+    const { container } = renderChapter({
+      eventName: 'UFC 362',
+      bouts: [
+        bout({
+          boutOrder: 2,
+          fighterAName: 'Named',
+          fighterACountry: 'Brazil',
+          fighterBName: null, // TBA
+          fighterBCountry: null,
+        }),
+      ],
+    })
+    expect(screen.getByText('TBA')).toBeTruthy()
+    expect(container.querySelectorAll('[data-flag-row]')).toHaveLength(1)
+  })
+
+  it('groups each thumbnail and its flag row into one photo-column, name beside it', () => {
+    const { container } = renderChapter({
+      eventName: 'UFC 363',
+      bouts: [bout({ boutOrder: 2 })], // base bout: both corners have photo + country
+    })
+    const cols = container.querySelectorAll('[data-photo-col]')
+    expect(cols).toHaveLength(2)
+    cols.forEach((col) => {
+      expect(col.querySelector('.mantine-Avatar-root')).toBeTruthy()
+      expect(col.querySelector('[data-flag-row]')).toBeTruthy()
     })
   })
 })

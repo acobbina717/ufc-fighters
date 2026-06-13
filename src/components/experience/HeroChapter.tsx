@@ -19,6 +19,7 @@ interface HeroChapterProps {
 
 export default function HeroChapter({ initialData }: HeroChapterProps) {
   const heroRef = useRef<HTMLElement>(null)
+  const silhouetteRef = useRef<HTMLDivElement>(null)
   const slashRef = useRef<HTMLDivElement>(null)
   const eyebrowRef = useRef<HTMLParagraphElement>(null)
   const titleRef = useRef<HTMLHeadingElement>(null)
@@ -46,6 +47,7 @@ export default function HeroChapter({ initialData }: HeroChapterProps) {
     if (prefersReduced) {
       const targets = [slashRef.current, eyebrowRef.current, titleRef.current, subtitleRef.current]
       if (scrollHintRef.current) targets.push(scrollHintRef.current)
+      if (silhouetteRef.current) targets.push(silhouetteRef.current)
       gsap.set(targets, { opacity: 1, x: 0, y: 0, scaleX: 1, yPercent: 0 })
       return
     }
@@ -78,7 +80,9 @@ export default function HeroChapter({ initialData }: HeroChapterProps) {
         },
       })
 
-      tl.to([scrollHintRef.current, pressPassRef.current], { opacity: 0, duration: 0.15 }, 0)
+      // Silhouette joins the scroll-hint / press-pass fade so the red slash
+      // draws through a clean, empty frame as the scroll enters Act 2.
+      tl.to([scrollHintRef.current, pressPassRef.current, silhouetteRef.current], { opacity: 0, duration: 0.15 }, 0)
         .to(slashRef.current, { scaleX: 1, ease: 'power3.inOut' }, 0)
         .to(split.chars, { yPercent: 0, stagger: 0.04, ease: 'expo.out' }, 0.2)
         .to(eyebrowRef.current, { opacity: 1, x: 0, ease: 'power2.out' }, 0.45)
@@ -109,7 +113,7 @@ export default function HeroChapter({ initialData }: HeroChapterProps) {
   return (
     <section ref={heroRef} className={classes.hero} aria-label="UFC Fighter Rankings">
       {featuredFighter?.photoUrl && (
-        <div className={classes.silhouette} aria-hidden="true">
+        <div ref={silhouetteRef} className={classes.silhouette} aria-hidden="true">
           <img src={featuredFighter.photoUrl} alt="" />
         </div>
       )}
