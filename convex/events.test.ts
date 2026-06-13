@@ -56,6 +56,24 @@ describe('getNextEvent', () => {
     expect(next!.fighterB?.name).toBe('Ankalaev')
   })
 
+  it('ignores past events even when they are nearer to now than the next future event', async () => {
+    const t = convexTest(schema, modules)
+    await t.run(async (ctx) => {
+      const a = await ctx.db.insert('fighters', fighter('Future Guy'))
+      const past = await ctx.db.insert('events', {
+        name: 'UFC Yesterday', date: Date.now() - 24 * HOUR, venue: '', location: '', slug: 'ufc-yesterday', lastSynced: 0,
+      })
+      const future = await ctx.db.insert('events', {
+        name: 'UFC Next Month', date: Date.now() + 30 * 24 * HOUR, venue: '', location: '', slug: 'ufc-next-month', lastSynced: 0,
+      })
+      await ctx.db.insert('bouts', { eventId: past, fighterAId: a, weightClass: 'lightweight', cardTier: 'main', boutOrder: 1 })
+      await ctx.db.insert('bouts', { eventId: future, fighterAId: a, weightClass: 'lightweight', cardTier: 'main', boutOrder: 1 })
+    })
+
+    const next = await t.query(api.events.getNextEvent, {})
+    expect(next!.name).toBe('UFC Next Month')
+  })
+
   it('returns null when there are no upcoming events', async () => {
     const t = convexTest(schema, modules)
     await t.run(async (ctx) => {
@@ -190,5 +208,79 @@ describe('replaceEventBouts', () => {
     )
     expect(bouts).toHaveLength(1)
     expect(bouts[0].fighterAId).toBe(a)
+  })
+})
+
+describe('getNextEventCard', () => {
+  it('returns every bout of the soonest upcoming event with names, tiers, and order', async () => {
+    const t = convexTest(schema, modules)
+    await t.run(async (ctx) => {
+      const a = await ctx.db.insert('fighters', fighter('Main A'))
+      const b = await ctx.db.insert('fighters', fighter('Main B'))
+      const c = await ctx.db.insert('fighters', fighter('Co Main'))
+      const d = await ctx.db.insert('fighters', fighter('Prelim Opener', { division: 'womens', weightClass: 'flyweight' }))
+      const soon = await ctx.db.insert('events', {
+        name: 'UFC 340', date: Date.now() + 2 * 24 * HOUR, venue: '', location: '', slug: 'ufc-340', lastSynced: 0,
+      })
+      const far = await ctx.db.insert('events', {
+        name: 'UFC 999', date: Date.now() + 60 * 24 * HOUR, venue: '', location: '', slug: 'ufc-999', lastSynced: 0,
+      })
+      // inserted out of bout order on purpose — the query sorts by boutOrder
+      await ctx.db.insert('bouts', { eventId: soon, fighterAId: d, weightClass: 'flyweight', cardTier: 'prelim', boutOrder: 3 })
+      await ctx.db.insert('bouts', { eventId: soon, fighterAId: a, fighterBId: b, weightClass: 'lightheavyweight', cardTier: 'main', boutOrder: 1 })
+      await ctx.db.insert('bouts', { eventId: soon, fighterAId: c, weightClass: 'lightweight', cardTier: 'main', boutOrder: 2 })
+      await ctx.db.insert('bouts', { eventId: far, fighterAId: a, weightClass: 'lightweight', cardTier: 'main', boutOrder: 1 })
+    })
+
+    const card = await t.query(api.events.getNextEventCard, {})
+    expect(card).not.toBeNull()
+    expect(card!.eventName).toBe('UFC 340')
+    expect(card!.bouts).toHaveLength(3) // the far event's bout is excluded
+    expect(card!.bouts.map((b) => b.boutOrder)).toEqual([1, 2, 3])
+    expect(card!.bouts[0]).toMatchObject({
+      cardTier: 'main', weightClass: 'lightheavyweight', division: 'mens',
+      fighterAName: 'Main A', fighterBName: 'Main B',
+    })
+    expect(card!.bouts[1].cardTier).toBe('main')
+    // division rides on the anchor fighter so women's bouts label correctly
+    expect(card!.bouts[2]).toMatchObject({ cardTier: 'prelim', division: 'womens' })
+  })
+
+  it('returns a null fighterBName for a TBA opponent', async () => {
+    const t = convexTest(schema, modules)
+    await t.run(async (ctx) => {
+      const a = await ctx.db.insert('fighters', fighter('Solo Act'))
+      const eventId = await ctx.db.insert('events', {
+        name: 'UFC 341', date: Date.now() + 24 * HOUR, venue: '', location: '', slug: 'ufc-341', lastSynced: 0,
+      })
+      await ctx.db.insert('bouts', { eventId, fighterAId: a, weightClass: 'lightweight', cardTier: 'prelim', boutOrder: 4 })
+    })
+
+    const card = await t.query(api.events.getNextEventCard, {})
+    expect(card!.bouts).toHaveLength(1)
+    expect(card!.bouts[0].fighterAName).toBe('Solo Act')
+    expect(card!.bouts[0].fighterBName).toBeNull()
+  })
+
+  it('returns null when there are no upcoming events', async () => {
+    const t = convexTest(schema, modules)
+    await t.run(async (ctx) => {
+      await ctx.db.insert('events', {
+        name: 'UFC Past', date: Date.now() - 24 * HOUR, venue: '', location: '', slug: 'ufc-past-card', lastSynced: 0,
+      })
+    })
+    expect(await t.query(api.events.getNextEventCard, {})).toBeNull()
+  })
+
+  it('returns an empty bout list for an upcoming event with no bouts yet', async () => {
+    const t = convexTest(schema, modules)
+    await t.run(async (ctx) => {
+      await ctx.db.insert('events', {
+        name: 'UFC Empty', date: Date.now() + 24 * HOUR, venue: '', location: '', slug: 'ufc-empty', lastSynced: 0,
+      })
+    })
+    const card = await t.query(api.events.getNextEventCard, {})
+    expect(card!.eventName).toBe('UFC Empty')
+    expect(card!.bouts).toEqual([])
   })
 })

@@ -1,0 +1,74 @@
+/* Floating Dock — compact pill, bottom-center, above the experience film
+   grain (z 100) and the former floating toggle layer (z 200). Mode-aware via
+   light-dark(); all values reference Mantine tokens. */
+.dock {
+  position: fixed;
+  bottom: var(--mantine-spacing-lg);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  gap: var(--mantine-spacing-xs);
+  padding: var(--mantine-spacing-xs);
+  max-width: calc(100vw - 2 * var(--mantine-spacing-md));
+  border-radius: var(--mantine-radius-xl);
+  background-color: light-dark(rgba(255, 255, 255, 0.85), rgba(0, 0, 0, 0.6));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid light-dark(rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.12));
+  box-shadow: var(--mantine-shadow-md);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.link {
+  padding: 6px var(--mantine-spacing-sm);
+  font-family: var(--mantine-font-family-headings);
+  font-weight: 700;
+  font-size: var(--mantine-font-size-sm);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+  color: light-dark(rgba(0, 0, 0, 0.65), rgba(255, 255, 255, 0.65));
+  border-radius: var(--mantine-radius-xl);
+  transition: color 0.2s, background 0.2s;
+}
+
+.link:hover {
+  color: light-dark(var(--mantine-color-black), var(--mantine-color-white));
+  background: light-dark(rgba(0, 0, 0, 0.05), rgba(255, 255, 255, 0.08));
+}
+
+/* Red is the interactive/brand accent (ADR 0008) — active route indicator. */
+.link[data-active='true'] {
+  color: var(--mantine-color-white);
+  background: var(--mantine-color-ufcRed-6);
+}
+
+.divider {
+  width: 1px;
+  align-self: stretch;
+  margin: 4px 0;
+  background: light-dark(rgba(0, 0, 0, 0.12), rgba(255, 255, 255, 0.15));
+}
+
+.iconButton {
+  color: light-dark(var(--mantine-color-black), var(--mantine-color-white));
+  flex-shrink: 0;
+}
+
+/* Mobile — tighten the pill so all three links + both buttons fit. */
+@media (max-width: 36em) {
+  .dock {
+    bottom: var(--mantine-spacing-sm);
+    gap: 4px;
+    padding: 6px;
+  }
+
+  .link {
+    padding: 6px var(--mantine-spacing-xs);
+    font-size: var(--mantine-font-size-xs);
+    letter-spacing: 0.06em;
+  }
+}

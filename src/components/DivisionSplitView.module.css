@@ -3,7 +3,7 @@
   width: 100%;
   height: calc(100vh - 59px);
   overflow: hidden;
-  background: #000;
+  background: light-dark(var(--mantine-color-white), var(--mantine-color-black));
 }
 
 .side {
@@ -39,7 +39,7 @@
   top: 50%;
   transform: translate(-50%, -50%);
   background: var(--mantine-primary-color-6);
-  color: #fff;
+  color: var(--mantine-color-white);
   font-family: var(--mantine-font-family-headings);
   font-weight: 800;
   font-size: 8px;

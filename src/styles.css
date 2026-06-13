@@ -7,8 +7,8 @@ body {
 }
 
 body {
-  background: light-dark(#fff, var(--mantine-color-dark-7));
-  color: light-dark(#111, var(--mantine-color-dark-0));
+  background: var(--mantine-color-body);
+  color: var(--mantine-color-text);
   font-family: var(--mantine-font-family);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

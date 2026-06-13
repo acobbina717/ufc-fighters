@@ -9,7 +9,16 @@ A showcase/portfolio project demonstrating high-quality front-end animation and 
 The cinematic, full-screen entry point at `/experience/`. No header. Contains the Hero Chapter, Division Toggle, Weight Class Grid, and End State in sequence.
 
 ### Hero Chapter
-The opening pinned-scroll section of the Experience Route. Animates a red slash, title ("THE RANKINGS"), eyebrow text, and a featured fighter silhouette. Pins for 200vh of scroll on desktop.
+The opening pinned-scroll section of the Experience Route, structured as two acts that share the scroll timeline rather than the frame. Act 1 (initial state): the Face-off — both headliners of the next Event with a "VS" mark — plus the press pass and eyebrow. Act 2: the face-off dissolves while the red slash draws through and the title ("THE RANKINGS") reveals. The act transition is the Parting: each fighter drives toward and past their own edge with fade as the slash draws through the dissolving VS, then the title chars rise. The slash renders behind fighter imagery. On mobile (no pin) and under reduced motion, the acts stack as two normally-scrolled, fully visible sections in the same narrative order: face-off first, then the title section. Next-event data is server-rendered (loaded in the route loader), so "TBA" only ever appears when an opponent is genuinely unannounced — never as a loading state.
+
+### Face-off
+The Act 1 composition of the Hero Chapter, arranged in poster symmetry: the two headliners of the next Event bottom-anchored in opposite corners (mirrored masks fading toward center), corner-name captions beneath each, and a central "VS" sitting exactly on the future slash line — Act 2's slash draws through where the VS dissolves. The eyebrow sits top-center; the slimmed Press Pass reflows to a single centered strip near the bottom. Fighters render in full color with a shared seating grade (common contrast curve, bottom fade into the base, consistent edges) to equalize mismatched source photos; the red VS and a gold champion "C" badge are the only accent colors in the frame. Falls back to a single fighter when the opponent is TBA or has no photo.
+
+### Press Pass
+The vertical next-event panel on the left rail of the Hero Chapter. Slimmed to event name, date, and venue only — the matchup itself is carried by the Face-off imagery, never repeated as text here.
+
+### Card Chapter
+A normally-flowing (unpinned) chapter following the Hero Chapter ("THE CARD") that reveals the remaining Bouts of the next Event as a typographic fight-poster ledger — "NAME vs NAME" rows with weight class, grouped under Card Tier dividers, staggered in as they enter the viewport. No photography; robust to missing photos and contrasts with the photo-led Hero. Deliberately unpinned so the scroll journey reads pin → flow → pin (Hero → Card → Divisions), keeping the card skippable at the user's own pace and absorbing variable bout counts.
 
 ### Division Toggle
 The Men's / Women's switcher that sits between the Hero Chapter and the Weight Class Grid in the Experience Route.
@@ -39,7 +48,10 @@ The visual component for a Fighter Beat. Shows: fighter photo (side determined b
 A CSS conic-gradient ring (not SVG) representing one of four fighter stats: Striking Output (SLpM), Striking Accuracy (%), Takedown Avg, Submission Avg.
 
 ### App Routes
-Standard routes under `/_app/` that include the site Header: Home (fighters list), Fighters, and Matchup pages.
+The utilitarian routes — Home (fighters list), Fighters, and Matchup pages — as opposed to the cinematic Experience and Division routes. Navigation is provided by the Floating Dock, not a header bar.
+
+### Floating Dock
+The single site-wide navigation element: a compact, collapsible floating pill present on every route (Experience, Fighters, Matchup, color-scheme toggle). Replaces the retired Header. Recedes/auto-hides during scroll-driven cinematic sequences so it never competes with chapter compositions.
 
 ### Event
 A scheduled UFC event stored in the `events` table. Fields: name (e.g. "UFC 314"), date (Unix timestamp), venue, location, lastSynced. Indexed by date. Past events are kept indefinitely to power fight history. Scraped from `ufc.com/events` via a daily Convex cron — server-side, not client-triggered. All upcoming events (typically 2–4 months out) are stored, not just the next one.
@@ -52,6 +64,9 @@ The broadcast tier of a Bout within an Event: `main` (PPV main card), `prelim` (
 
 ### Fighter Activity
 A fighter is considered active if they appear in the UFC rankings OR on an upcoming fight card. Activity is enforced structurally by the scraping strategy — we only store fighters with a live reason to be active. There is no stored `isActive` flag; presence in the database implies activity at last sync.
+
+### Page Shell
+The shared layout wrapper for App Routes, defining the only sanctioned container widths (content / wide / full), the type scale, and the vertical rhythm (section spacing in fixed steps of the theme spacing scale). App pages compose inside it rather than defining their own max-widths.
 
 ### Planned Features
 Fighter Search, Head-to-Head Comparison, Stats Deep-Dive, Fight History, Mobile Improvements. Project is personal but intended to grow in robustness over time.

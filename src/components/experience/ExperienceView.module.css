@@ -5,25 +5,6 @@
   transition: background 0.3s ease;
 }
 
-/* Floating theme toggle for the chrome-free experience */
-.themeToggle {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 200;
-  background-color: light-dark(rgba(255, 255, 255, 0.8), rgba(0, 0, 0, 0.4));
-  backdrop-filter: blur(8px);
-  border: 1px solid light-dark(rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.1));
-  color: light-dark(var(--mantine-color-black), var(--mantine-color-white));
-  transition: all 0.2s ease;
-}
-
-.themeToggle:hover {
-  background-color: light-dark(#fff, #111);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
 /* Film grain overlay — fixed, persistent across all chapters */
 .root::after {
   content: '';

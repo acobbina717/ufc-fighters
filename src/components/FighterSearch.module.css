@@ -4,14 +4,14 @@
   font-size: 11px;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.4);
+  color: light-dark(rgba(0, 0, 0, 0.55), rgba(255, 255, 255, 0.4));
   margin-bottom: 6px;
 }
 
 .input {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #fff;
+  background: light-dark(rgba(0, 0, 0, 0.04), rgba(255, 255, 255, 0.05));
+  border: 1px solid light-dark(rgba(0, 0, 0, 0.15), rgba(255, 255, 255, 0.12));
+  color: light-dark(var(--mantine-color-black), var(--mantine-color-white));
   font-family: var(--mantine-font-family-headings);
   font-weight: 700;
   text-transform: uppercase;
@@ -23,12 +23,12 @@
 }
 
 .dropdown {
-  background: #111;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: light-dark(var(--mantine-color-white), #111);
+  border: 1px solid light-dark(rgba(0, 0, 0, 0.12), rgba(255, 255, 255, 0.1));
 }
 
 .empty {
-  color: rgba(255, 255, 255, 0.4);
+  color: light-dark(rgba(0, 0, 0, 0.55), rgba(255, 255, 255, 0.4));
   font-size: 13px;
 }
 

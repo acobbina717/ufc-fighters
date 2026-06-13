@@ -3,7 +3,7 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: #000;
+  background: light-dark(var(--mantine-color-white), var(--mantine-color-black));
 }
 
 /* ── Fighter selector bar ── */
@@ -15,8 +15,8 @@
   align-items: end;
   gap: var(--mantine-spacing-md);
   padding: var(--mantine-spacing-md) var(--mantine-spacing-xl);
-  background: rgba(0, 0, 0, 0.95);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  background: light-dark(rgba(255, 255, 255, 0.95), rgba(0, 0, 0, 0.95));
+  border-bottom: 1px solid light-dark(rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.07));
   z-index: 2;
 }
 
@@ -26,7 +26,7 @@
   font-size: 11px;
   letter-spacing: 0.3em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.25);
+  color: light-dark(rgba(0, 0, 0, 0.45), rgba(255, 255, 255, 0.25));
   text-align: center;
   padding-bottom: 8px;
 }
@@ -68,13 +68,19 @@
   justify-content: center;
   position: relative;
   z-index: 3;
-  background: #000;
+  background: light-dark(var(--mantine-color-white), var(--mantine-color-black));
 }
 
 .vsLine {
   width: 1px;
   flex: 1;
-  background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.1) 30%, rgba(255, 255, 255, 0.1) 70%, transparent);
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    light-dark(rgba(0, 0, 0, 0.12), rgba(255, 255, 255, 0.1)) 30%,
+    light-dark(rgba(0, 0, 0, 0.12), rgba(255, 255, 255, 0.1)) 70%,
+    transparent
+  );
 }
 
 .vsText {
@@ -95,7 +101,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #050505;
+  background: light-dark(var(--mantine-color-gray-0), #050505);
 }
 
 .emptyPanelHint {
@@ -104,7 +110,7 @@
   font-size: 12px;
   letter-spacing: 0.25em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.12);
+  color: light-dark(rgba(0, 0, 0, 0.3), rgba(255, 255, 255, 0.12));
 }
 
 /* ── Mobile ── */

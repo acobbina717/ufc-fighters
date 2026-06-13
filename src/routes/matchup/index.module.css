@@ -2,6 +2,6 @@
   height: calc(100vh - 56px); /* full height minus header */
   display: flex;
   flex-direction: column;
-  background: #000;
+  background: light-dark(var(--mantine-color-white), var(--mantine-color-black));
   overflow: hidden;
 }

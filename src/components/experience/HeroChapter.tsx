@@ -5,19 +5,19 @@ import { useRef } from 'react'
 import { useMantineTheme } from '@mantine/core'
 import { useMediaQuery, useReducedMotion } from '@mantine/hooks'
 import { api } from '../../../convex/_generated/api'
-import type { Doc } from '../../../convex/_generated/dataModel'
 import { useStableQuery } from '#/hooks/useStableQuery'
-import { formatEventDate } from '#/lib/formatEventDate'
+import { derivePressPass } from '#/lib/heroLoader'
+import type { HeroLoaderData } from '#/lib/heroLoader'
 import { gsap, SplitText, useGSAP } from '#/lib/gsap'
 import classes from './HeroChapter.module.css'
 
-// Last name (final whitespace-delimited token), uppercased; "TBA" when absent.
-function cornerName(fighter: Doc<'fighters'> | null | undefined): string {
-  const last = fighter?.name?.trim().split(/\s+/).pop()
-  return last ? last.toUpperCase() : 'TBA'
+interface HeroChapterProps {
+  // Server-loaded seed (issue #25). Used until the live Convex subscriptions
+  // resolve, so the first paint never shows loading placeholders.
+  initialData: HeroLoaderData
 }
 
-export default function HeroChapter() {
+export default function HeroChapter({ initialData }: HeroChapterProps) {
   const heroRef = useRef<HTMLElement>(null)
   const slashRef = useRef<HTMLDivElement>(null)
   const eyebrowRef = useRef<HTMLParagraphElement>(null)
@@ -28,16 +28,19 @@ export default function HeroChapter() {
   const prefersReduced = useReducedMotion()
   const theme = useMantineTheme()
   const isMobile = useMediaQuery(`(max-width: calc(${theme.breakpoints.sm} - 0.0625em))`)
-  const featuredFighter = useStableQuery(api.fighters.getFeaturedFighter, {})
-  const nextEvent = useStableQuery(api.events.getNextEvent, {})
+  // Loader data seeds the first (server-rendered) paint; once the live Convex
+  // subscription resolves (anything but undefined) it takes over, so realtime
+  // updates still propagate after hydration.
+  const liveFeaturedFighter = useStableQuery(api.fighters.getFeaturedFighter, {})
+  const liveNextEvent = useStableQuery(api.events.getNextEvent, {})
+  const featuredFighter =
+    liveFeaturedFighter === undefined ? initialData.featuredFighter : liveFeaturedFighter
+  const nextEvent = liveNextEvent === undefined ? initialData.nextEvent : liveNextEvent
 
-  // Defaults keep the press pass populated while the query loads or returns null,
-  // so the GSAP timeline target (pressPassRef) always has content to fade.
-  const eventName = nextEvent?.name ?? 'TBA'
-  const matchup = nextEvent
-    ? `${cornerName(nextEvent.fighterA)} vs ${cornerName(nextEvent.fighterB)}`
-    : 'TO BE ANNOUNCED'
-  const eventDate = nextEvent ? formatEventDate(nextEvent.date) : 'DATE TBA'
+  // null when there is genuinely no upcoming event — the press pass content is
+  // simply omitted (never "TBA" placeholders). "TBA" can only appear inside a
+  // real bout whose corner is unannounced.
+  const pressPass = derivePressPass(nextEvent)
 
   useGSAP(() => {
     if (prefersReduced) {
@@ -123,16 +126,20 @@ export default function HeroChapter() {
       </div>
 
       {!isMobile && (
+        // Outer div always renders so the GSAP timeline target (pressPassRef)
+        // exists; the info content is omitted when there is no upcoming event.
         <div ref={pressPassRef} className={classes.pressPass} aria-label="Next UFC event">
-          <div className={classes.pressPassInfo}>
-            <span className={classes.pressPassLabel}>Next Event</span>
-            <span className={classes.pressPassName}>{eventName}</span>
-            <span className={classes.pressPassMatchup}>{matchup}</span>
-            <span className={classes.pressPassDate}>
-              <span className={classes.pressPassDot} aria-hidden="true" />
-              {eventDate}
-            </span>
-          </div>
+          {pressPass && (
+            <div className={classes.pressPassInfo}>
+              <span className={classes.pressPassLabel}>Next Event</span>
+              <span className={classes.pressPassName}>{pressPass.eventName}</span>
+              <span className={classes.pressPassMatchup}>{pressPass.matchup}</span>
+              <span className={classes.pressPassDate}>
+                <span className={classes.pressPassDot} aria-hidden="true" />
+                {pressPass.eventDate}
+              </span>
+            </div>
+          )}
         </div>
       )}
 

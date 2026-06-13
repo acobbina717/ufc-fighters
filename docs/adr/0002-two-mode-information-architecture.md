@@ -18,6 +18,6 @@ The Experience route is the "front door" and showcase moment. The App section is
 ## Consequences
 
 - New utilitarian features (search, head-to-head, stats deep-dive, fight history) live exclusively under `/_app/`
-- The Experience route must never gain a persistent header or utility nav
+- ~~The Experience route must never gain a persistent header or utility nav~~ — revised by ADR 0007: a site-wide floating dock (not a header bar) now serves all routes, including the Experience
 - The Experience route carries a floating Sun/Moon color-scheme toggle (`ExperienceView.tsx`) — an intentional exception to its fixed black base; light/dark support there is by design, not leftover experimentation
 - The App header needs a design pass to accommodate search, navigation between features, and eventual mobile improvements

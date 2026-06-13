@@ -1,9 +1,11 @@
 import {
   HeadContent,
+  Outlet,
   Scripts,
   createRootRouteWithContext,
 } from "@tanstack/react-router";
 import ConvexProvider from "../integrations/convex/provider";
+import FloatingDock from "../components/FloatingDock";
 import TanStackQueryProvider from "../integrations/tanstack-query/root-provider";
 import appCss from "../styles.css?url";
 import rootClasses from "./__root.module.css";
@@ -18,8 +20,14 @@ import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";
 import { Notifications } from "@mantine/notifications";
 import { mantineTheme } from "../lib/mantine";
+import {
+  COLOR_SCHEME_STORAGE_KEY,
+  colorSchemeManager,
+} from "../lib/colorSchemeManager";
 
-// Providers only — Header lives in _app.tsx so home (/) can be chrome-free
+// Providers + the site-wide Floating Dock (ADR 0007) — the dock renders from
+// the root component so it appears on every route (Experience, Divisions, and
+// App Routes). It is the only nav chrome; the Header was retired in slice #26.
 interface MyRouterContext {
   queryClient: QueryClient;
 }
@@ -71,17 +79,37 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
     ],
   }),
   shellComponent: RootDocument,
+  component: RootComponent,
 });
+
+function RootComponent() {
+  return (
+    <>
+      <Outlet />
+      <FloatingDock />
+    </>
+  );
+}
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" {...mantineHtmlProps}>
       <head>
-        <ColorSchemeScript defaultColorScheme="light" />
+        {/* ADR 0006 — default `auto` (follow the OS); the inline script reads
+            the persisted choice before paint so SSR HTML never flashes the
+            wrong mode. */}
+        <ColorSchemeScript
+          defaultColorScheme="auto"
+          localStorageKey={COLOR_SCHEME_STORAGE_KEY}
+        />
         <HeadContent />
       </head>
       <body>
-        <MantineProvider theme={mantineTheme} defaultColorScheme="light">
+        <MantineProvider
+          theme={mantineTheme}
+          defaultColorScheme="auto"
+          colorSchemeManager={colorSchemeManager}
+        >
           <Notifications position="top-right" />
           <ConvexProvider>
             <TanStackQueryProvider>

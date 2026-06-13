@@ -9,30 +9,25 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AppMatchupIndexRouteImport } from './routes/_app/matchup/index'
-import { Route as AppFightersIndexRouteImport } from './routes/_app/fighters/index'
+import { Route as MatchupIndexRouteImport } from './routes/matchup/index'
+import { Route as FightersIndexRouteImport } from './routes/fighters/index'
 import { Route as DivisionsGenderWeightClassRouteImport } from './routes/divisions.$gender.$weightClass'
 
-const AppRoute = AppRouteImport.update({
-  id: '/_app',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppMatchupIndexRoute = AppMatchupIndexRouteImport.update({
+const MatchupIndexRoute = MatchupIndexRouteImport.update({
   id: '/matchup/',
   path: '/matchup/',
-  getParentRoute: () => AppRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AppFightersIndexRoute = AppFightersIndexRouteImport.update({
+const FightersIndexRoute = FightersIndexRouteImport.update({
   id: '/fighters/',
   path: '/fighters/',
-  getParentRoute: () => AppRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
 const DivisionsGenderWeightClassRoute =
   DivisionsGenderWeightClassRouteImport.update({
@@ -43,57 +38,49 @@ const DivisionsGenderWeightClassRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/fighters/': typeof FightersIndexRoute
+  '/matchup/': typeof MatchupIndexRoute
   '/divisions/$gender/$weightClass': typeof DivisionsGenderWeightClassRoute
-  '/fighters/': typeof AppFightersIndexRoute
-  '/matchup/': typeof AppMatchupIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/fighters': typeof FightersIndexRoute
+  '/matchup': typeof MatchupIndexRoute
   '/divisions/$gender/$weightClass': typeof DivisionsGenderWeightClassRoute
-  '/fighters': typeof AppFightersIndexRoute
-  '/matchup': typeof AppMatchupIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/_app': typeof AppRouteWithChildren
+  '/fighters/': typeof FightersIndexRoute
+  '/matchup/': typeof MatchupIndexRoute
   '/divisions/$gender/$weightClass': typeof DivisionsGenderWeightClassRoute
-  '/_app/fighters/': typeof AppFightersIndexRoute
-  '/_app/matchup/': typeof AppMatchupIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/divisions/$gender/$weightClass'
     | '/fighters/'
     | '/matchup/'
+    | '/divisions/$gender/$weightClass'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/divisions/$gender/$weightClass' | '/fighters' | '/matchup'
+  to: '/' | '/fighters' | '/matchup' | '/divisions/$gender/$weightClass'
   id:
     | '__root__'
     | '/'
-    | '/_app'
+    | '/fighters/'
+    | '/matchup/'
     | '/divisions/$gender/$weightClass'
-    | '/_app/fighters/'
-    | '/_app/matchup/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AppRoute: typeof AppRouteWithChildren
+  FightersIndexRoute: typeof FightersIndexRoute
+  MatchupIndexRoute: typeof MatchupIndexRoute
   DivisionsGenderWeightClassRoute: typeof DivisionsGenderWeightClassRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/_app': {
-      id: '/_app'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AppRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -101,19 +88,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_app/matchup/': {
-      id: '/_app/matchup/'
+    '/matchup/': {
+      id: '/matchup/'
       path: '/matchup'
       fullPath: '/matchup/'
-      preLoaderRoute: typeof AppMatchupIndexRouteImport
-      parentRoute: typeof AppRoute
+      preLoaderRoute: typeof MatchupIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_app/fighters/': {
-      id: '/_app/fighters/'
+    '/fighters/': {
+      id: '/fighters/'
       path: '/fighters'
       fullPath: '/fighters/'
-      preLoaderRoute: typeof AppFightersIndexRouteImport
-      parentRoute: typeof AppRoute
+      preLoaderRoute: typeof FightersIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/divisions/$gender/$weightClass': {
       id: '/divisions/$gender/$weightClass'
@@ -125,21 +112,10 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AppRouteChildren {
-  AppFightersIndexRoute: typeof AppFightersIndexRoute
-  AppMatchupIndexRoute: typeof AppMatchupIndexRoute
-}
-
-const AppRouteChildren: AppRouteChildren = {
-  AppFightersIndexRoute: AppFightersIndexRoute,
-  AppMatchupIndexRoute: AppMatchupIndexRoute,
-}
-
-const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AppRoute: AppRouteWithChildren,
+  FightersIndexRoute: FightersIndexRoute,
+  MatchupIndexRoute: MatchupIndexRoute,
   DivisionsGenderWeightClassRoute: DivisionsGenderWeightClassRoute,
 }
 export const routeTree = rootRouteImport

@@ -1,0 +1,110 @@
+/*
+ * Page Shell (#29) — the shared layout wrapper for App Routes.
+ *
+ * Defines the ONLY sanctioned container widths (content / wide / full),
+ * the heading/body/data type scale, and vertical rhythm in fixed steps of
+ * the Mantine theme spacing scale. App pages compose inside it rather than
+ * defining their own max-widths or one-off spacing (CONTEXT.md "Page Shell").
+ *
+ * Every value is a Mantine theme token; the page surface is mode-aware
+ * per ADR 0006 (light-dark + Mantine color tokens, never hardcoded).
+ */
+
+.shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: light-dark(var(--mantine-color-white), var(--mantine-color-black));
+  color: light-dark(var(--mantine-color-black), var(--mantine-color-white));
+}
+
+/* ── Container variants ─────────────────────────────────────────────────
+ * content — reading-width column (theme breakpoint md)
+ * wide    — data-dense layouts (theme breakpoint lg)
+ * full    — full-bleed stage, no gutter (cinematic sections)
+ */
+
+.section {
+  width: 100%;
+}
+
+.section[data-container='content'] {
+  max-width: var(--mantine-breakpoint-md);
+  margin-inline: auto;
+  padding-inline: var(--mantine-spacing-md);
+}
+
+.section[data-container='wide'] {
+  max-width: var(--mantine-breakpoint-lg);
+  margin-inline: auto;
+  padding-inline: var(--mantine-spacing-md);
+}
+
+.section[data-container='full'] {
+  max-width: none;
+  padding-inline: 0;
+}
+
+/* ── Vertical rhythm — fixed steps of the theme spacing scale ─────────── */
+
+.section[data-rhythm='none'] {
+  padding-block: 0;
+}
+
+.section[data-rhythm='compact'] {
+  padding-block: var(--mantine-spacing-lg);
+}
+
+.section[data-rhythm='default'] {
+  padding-block: var(--mantine-spacing-xl);
+}
+
+/* A full-bleed section with no rhythm is the page's stage: it grows to
+ * fill the shell. Deliberately layout-neutral (no transform / overflow /
+ * fixed height) so GSAP pinned-scroll descendants are unaffected. */
+.section[data-container='full'][data-rhythm='none'] {
+  flex: 1 0 auto;
+}
+
+/* ── Type scale ─────────────────────────────────────────────────────────
+ * heading — Barlow Condensed 800 uppercase (theme headings family)
+ * body    — Inter at theme body size/leading
+ * data    — condensed numerals for records, stats, rankings
+ */
+
+.heading {
+  margin: 0;
+  font-family: var(--mantine-font-family-headings);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  font-size: var(--mantine-h1-font-size);
+  line-height: var(--mantine-h1-line-height);
+}
+
+.heading[data-order='2'] {
+  font-size: var(--mantine-h2-font-size);
+  line-height: var(--mantine-h2-line-height);
+}
+
+.heading[data-order='3'] {
+  font-size: var(--mantine-h3-font-size);
+  line-height: var(--mantine-h3-line-height);
+}
+
+.body {
+  margin: 0;
+  font-family: var(--mantine-font-family);
+  font-size: var(--mantine-font-size-md);
+  line-height: var(--mantine-line-height-md);
+}
+
+.data {
+  font-family: var(--mantine-font-family-headings);
+  font-weight: 700;
+  font-size: var(--mantine-font-size-sm);
+  line-height: var(--mantine-line-height-sm);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}

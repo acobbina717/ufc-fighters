@@ -18,7 +18,15 @@ function isValidGender(value: string): value is Gender {
 export const Route = createFileRoute('/divisions/$gender/$weightClass')({
   component: DivisionRouteComponent,
   errorComponent: () => (
-    <Center h="100vh" style={{ background: '#000', color: '#fff', flexDirection: 'column', gap: 16 }}>
+    <Center
+      h="100vh"
+      style={{
+        background: 'var(--mantine-color-body)',
+        color: 'var(--mantine-color-text)',
+        flexDirection: 'column',
+        gap: 16,
+      }}
+    >
       <p style={{ fontSize: 14, letterSpacing: '0.2em', textTransform: 'uppercase', opacity: 0.6 }}>
         Division not found
       </p>

@@ -3,7 +3,7 @@
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: #000;
+  background: light-dark(var(--mantine-color-white), var(--mantine-color-black));
   display: flex;
   flex-direction: row;
 }
@@ -47,12 +47,13 @@
   pointer-events: none;
 }
 
+/* Fades blend the photo into the panel surface, so every stop is mode-aware. */
 .panel[data-gender='mens'] .photoFade {
   background: linear-gradient(
     to right,
-    #000 0%,
-    rgba(0, 0, 0, 0.7) 15%,
-    rgba(0, 0, 0, 0.2) 40%,
+    light-dark(var(--mantine-color-white), var(--mantine-color-black)) 0%,
+    light-dark(rgba(255, 255, 255, 0.7), rgba(0, 0, 0, 0.7)) 15%,
+    light-dark(rgba(255, 255, 255, 0.2), rgba(0, 0, 0, 0.2)) 40%,
     transparent 65%
   );
 }
@@ -60,9 +61,9 @@
 .panel[data-gender='womens'] .photoFade {
   background: linear-gradient(
     to left,
-    #000 0%,
-    rgba(0, 0, 0, 0.7) 15%,
-    rgba(0, 0, 0, 0.2) 40%,
+    light-dark(var(--mantine-color-white), var(--mantine-color-black)) 0%,
+    light-dark(rgba(255, 255, 255, 0.7), rgba(0, 0, 0, 0.7)) 15%,
+    light-dark(rgba(255, 255, 255, 0.2), rgba(0, 0, 0, 0.2)) 40%,
     transparent 65%
   );
 }
@@ -74,7 +75,12 @@
   bottom: 0;
   height: 40%;
   pointer-events: none;
-  background: linear-gradient(to top, #000 0%, rgba(0, 0, 0, 0.6) 50%, transparent 100%);
+  background: linear-gradient(
+    to top,
+    light-dark(var(--mantine-color-white), var(--mantine-color-black)) 0%,
+    light-dark(rgba(255, 255, 255, 0.6), rgba(0, 0, 0, 0.6)) 50%,
+    transparent 100%
+  );
 }
 
 /* ── Top: gender label + division pills ── */
@@ -91,7 +97,7 @@
   font-size: var(--mantine-font-size-xs);
   font-weight: 800;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.3);
+  color: light-dark(rgba(0, 0, 0, 0.45), rgba(255, 255, 255, 0.3));
   font-family: var(--mantine-font-family-headings);
 }
 
@@ -132,9 +138,9 @@
 /* ── Division pills ── */
 
 .pill {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.5);
+  background: light-dark(rgba(0, 0, 0, 0.05), rgba(255, 255, 255, 0.06));
+  border: 1px solid light-dark(rgba(0, 0, 0, 0.12), rgba(255, 255, 255, 0.1));
+  color: light-dark(rgba(0, 0, 0, 0.6), rgba(255, 255, 255, 0.5));
   font-family: var(--mantine-font-family-headings);
   font-weight: 700;
   font-size: 9px;
@@ -147,15 +153,15 @@
 }
 
 .pill:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.8);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: light-dark(rgba(0, 0, 0, 0.08), rgba(255, 255, 255, 0.1));
+  color: light-dark(rgba(0, 0, 0, 0.85), rgba(255, 255, 255, 0.8));
+  border-color: light-dark(rgba(0, 0, 0, 0.25), rgba(255, 255, 255, 0.2));
 }
 
 .pill[data-active='true'] {
   background: var(--mantine-primary-color-6);
   border-color: var(--mantine-primary-color-6);
-  color: #fff;
+  color: var(--mantine-color-white);
 }
 
 /* ── Champion section ── */
@@ -172,14 +178,14 @@
   font-size: clamp(1.8rem, 3vw, 3.2rem);
   line-height: 0.93;
   letter-spacing: -0.01em;
-  color: white;
+  color: light-dark(var(--mantine-color-black), var(--mantine-color-white));
   text-transform: uppercase;
   margin: 0;
 }
 
 .nickname {
   font-size: var(--mantine-font-size-sm);
-  color: rgba(255, 255, 255, 0.45);
+  color: light-dark(rgba(0, 0, 0, 0.55), rgba(255, 255, 255, 0.45));
   font-style: italic;
 }
 
@@ -192,13 +198,14 @@
 .recordWins {
   font-size: var(--mantine-font-size-sm);
   font-weight: 700;
-  color: #4ade80;
+  /* Semantic win color, mode-aware: the light shade fails contrast on white. */
+  color: light-dark(#16a34a, #4ade80);
   font-family: var(--mantine-font-family-headings);
 }
 
 .recordDot {
   font-size: var(--mantine-font-size-sm);
-  color: rgba(255, 255, 255, 0.2);
+  color: light-dark(rgba(0, 0, 0, 0.25), rgba(255, 255, 255, 0.2));
 }
 
 .recordLosses {
@@ -211,13 +218,13 @@
 .recordDraws {
   font-size: var(--mantine-font-size-sm);
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.55);
+  color: light-dark(rgba(0, 0, 0, 0.6), rgba(255, 255, 255, 0.55));
   font-family: var(--mantine-font-family-headings);
 }
 
 .country {
   font-size: var(--mantine-font-size-xs);
-  color: rgba(255, 255, 255, 0.35);
+  color: light-dark(rgba(0, 0, 0, 0.5), rgba(255, 255, 255, 0.35));
 }
 
 /* ── Loading dots ── */
@@ -232,7 +239,7 @@
 .loadingDot {
   width: 5px;
   height: 5px;
-  background: rgba(255, 255, 255, 0.25);
+  background: light-dark(rgba(0, 0, 0, 0.3), rgba(255, 255, 255, 0.25));
   border-radius: 50%;
   animation: dotPulse 1.4s ease-in-out infinite;
 }
@@ -250,17 +257,17 @@
 .contendersWrapper {
   flex: 0 1 auto;
   min-height: 0;
-  background: rgba(0, 0, 0, 0.9);
+  background: light-dark(rgba(255, 255, 255, 0.9), rgba(0, 0, 0, 0.9));
   border-top: 1px solid alpha(var(--mantine-primary-color-6), 0.25);
   display: flex;
   flex-direction: column;
 }
 
 .contendersHeader {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid light-dark(rgba(0, 0, 0, 0.08), rgba(255, 255, 255, 0.05));
   position: sticky;
   top: 0;
-  background: rgba(0, 0, 0, 0.95);
+  background: light-dark(rgba(255, 255, 255, 0.95), rgba(0, 0, 0, 0.95));
   z-index: 1;
   display: flex;
   justify-content: space-between;
@@ -274,13 +281,13 @@
 }
 
 .contenderRow {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.04));
   transition: background 0.12s;
   width: 100%;
 }
 
 .contenderRow:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: light-dark(rgba(0, 0, 0, 0.04), rgba(255, 255, 255, 0.05));
 }
 
 .contenderRow[data-active='true'] {
@@ -331,7 +338,7 @@
   font-size: var(--mantine-font-size-sm);
   font-weight: 700;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.8);
+  color: light-dark(rgba(0, 0, 0, 0.85), rgba(255, 255, 255, 0.8));
   font-family: var(--mantine-font-family-headings);
 }
 
@@ -342,7 +349,7 @@
 .recordText {
   font-size: var(--mantine-font-size-xs);
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.35);
+  color: light-dark(rgba(0, 0, 0, 0.5), rgba(255, 255, 255, 0.35));
   font-family: var(--mantine-font-family-headings);
   flex-shrink: 0;
 }

@@ -35,6 +35,49 @@ export const getNextEvent = query({
   },
 })
 
+// Every bout of the soonest upcoming event, joined with fighter names, for the
+// Card Chapter's typographic ledger (issue #30). Returns the raw bout list —
+// main-event exclusion and tier grouping are the client's pure helper's job
+// (src/lib/cardLedger.ts). fighterBName is null when the opponent is TBA.
+// Returns null when there are no upcoming events.
+export const getNextEventCard = query({
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now()
+    const event = await ctx.db
+      .query('events')
+      .withIndex('by_date', (q) => q.gt('date', now))
+      .order('asc')
+      .first()
+    if (!event) return null
+
+    const bouts = await ctx.db
+      .query('bouts')
+      .withIndex('by_event', (q) => q.eq('eventId', event._id))
+      .collect()
+
+    const card = []
+    for (const bout of bouts) {
+      const fighterA = await ctx.db.get(bout.fighterAId)
+      if (!fighterA) continue // a bout can't render without its anchor fighter
+      const fighterB = bout.fighterBId ? await ctx.db.get(bout.fighterBId) : null
+      card.push({
+        boutOrder: bout.boutOrder,
+        cardTier: bout.cardTier,
+        weightClass: bout.weightClass,
+        // Bouts store only the bare weight-class slug; the gendered division
+        // (needed for the "WOMEN'S …" label) rides on the anchor fighter.
+        division: fighterA.division,
+        fighterAName: fighterA.name,
+        fighterBName: fighterB?.name ?? null,
+      })
+    }
+    card.sort((a, b) => a.boutOrder - b.boutOrder)
+
+    return { eventName: event.name, bouts: card }
+  },
+})
+
 const cardTier = v.union(
   v.literal('main'),
   v.literal('prelim'),

@@ -3,7 +3,7 @@
   align-items: center;
   justify-content: center;
   height: calc(100vh - 56px);
-  background: #000;
+  background: light-dark(var(--mantine-color-white), var(--mantine-color-black));
 }
 
 .notFoundInner {
@@ -14,7 +14,7 @@
   font-family: var(--mantine-font-family-headings);
   font-weight: 800;
   font-size: 6rem;
-  color: rgba(255, 255, 255, 0.05);
+  color: light-dark(rgba(0, 0, 0, 0.07), rgba(255, 255, 255, 0.05));
   letter-spacing: 0.05em;
 }
 
@@ -24,5 +24,5 @@
   font-size: 1rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.25);
+  color: light-dark(rgba(0, 0, 0, 0.45), rgba(255, 255, 255, 0.25));
 }
