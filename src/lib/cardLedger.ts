@@ -16,6 +16,10 @@ export interface LedgerBout {
   fighterAName: string
   /** null = opponent unannounced — renders as TBA. */
   fighterBName: string | null
+  /** Corner Thumbnail source (ADR 0009); null = TBA corner or no photo on file. */
+  fighterAPhotoUrl: string | null
+  /** Corner Thumbnail source (ADR 0009); null = TBA corner or no photo on file. */
+  fighterBPhotoUrl: string | null
 }
 
 export interface TierSection {

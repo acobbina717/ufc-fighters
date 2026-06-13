@@ -1,8 +1,9 @@
 /* THE CARD — typographic fight-poster ledger (issue #30). Deliberately unpinned
    normal flow between the pinned Hero and the Weight Class Grid. Palette per
-   ADR 0008: neutral mode-aware grays for everything; red strictly as the brand
+   ADR 0008: neutral mode-aware grays for the chrome; red strictly as the brand
    accent (eyebrow + the vs marks — the same job red does in the Hero face-off);
-   no gold (no champion iconography in this chapter), no photography.
+   no gold (no champion iconography in this chapter). Full-color Corner
+   Thumbnails (ADR 0009) are photographic content, outside the chrome palette.
 
    Rows are fully visible by default — GSAP applies the pre-animation state at
    runtime only when motion is allowed, so reduced-motion users (and any GSAP
@@ -14,7 +15,10 @@
 }
 
 .inner {
-  max-width: 760px;
+  /* Wider on large viewports so the ledger uses the real estate rather than
+     stranding a narrow strip in a sea of whitespace; still centered and capped
+     so line lengths stay poster-like. */
+  max-width: min(1120px, 92vw);
   margin: 0 auto;
 }
 
@@ -84,7 +88,7 @@
 }
 
 .boutRow {
-  padding: clamp(18px, 2.6vh, 28px) 0;
+  padding: clamp(20px, 3vh, 40px) 0;
   border-bottom: 1px solid light-dark(rgba(0, 0, 0, 0.07), rgba(255, 255, 255, 0.07));
 }
 
@@ -105,17 +109,60 @@
 
 .matchup {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   flex-wrap: wrap;
   column-gap: clamp(12px, 1.6vw, 20px);
   row-gap: 2px;
   margin: 0;
 }
 
+/* A corner = its Thumbnail glued to its name, so the pair stays together when
+   the row wraps. The closing corner mirrors the order (name then thumbnail) for
+   the "□ NAME vs NAME □" symmetry. */
+.corner {
+  display: flex;
+  align-items: center;
+  gap: clamp(10px, 1.2vw, 16px);
+  min-width: 0;
+}
+
+.cornerEnd {
+  flex-direction: row-reverse;
+}
+
+/* Corner Thumbnail (ADR 0009) — sharp square (radius={0}), full color, a
+   downscaled head/shoulder crop of the full-body source (never upscaled).
+   --avatar-size overrides Mantine's Avatar sizing token so the square can
+   scale fluidly with the row.
+
+   A neutral hairline frame + mode-aware backstop (ADR 0008 carve-out: this is
+   chrome around photographic content, never an accent) does two jobs: it reads
+   mismatched, differently-lit source photos as one consistent set, and it gives
+   the silhouette fallback a defined square instead of a floating icon. */
+.thumb {
+  --avatar-size: clamp(40px, 4.6vw, 84px);
+  flex-shrink: 0;
+  border: 1px solid light-dark(rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.12));
+  background: light-dark(rgba(0, 0, 0, 0.04), rgba(255, 255, 255, 0.06));
+}
+
+.thumbImage {
+  /* Mantine's Avatar image is object-fit: cover already; pull the crop to the
+     top so the head/shoulders read rather than the chest. */
+  object-position: top;
+}
+
+/* Silhouette fallback (missing photo / TBA). Mantine's placeholder icon draws
+   with currentColor — a muted neutral keeps it deliberately quiet, matching the
+   TBA name treatment, in both color schemes. */
+.thumbPlaceholder {
+  color: light-dark(rgba(0, 0, 0, 0.28), rgba(255, 255, 255, 0.3));
+}
+
 .fighter {
   font-family: var(--mantine-font-family-headings);
   font-weight: 800;
-  font-size: clamp(24px, 3.4vw, 40px);
+  font-size: clamp(24px, 3.4vw, 52px);
   line-height: 1.05;
   letter-spacing: 0.01em;
   color: light-dark(rgba(0, 0, 0, 0.88), rgba(255, 255, 255, 0.88));
@@ -136,21 +183,39 @@
 .tba {
   font-family: var(--mantine-font-family-headings);
   font-weight: 800;
-  font-size: clamp(24px, 3.4vw, 40px);
+  font-size: clamp(24px, 3.4vw, 52px);
   line-height: 1.05;
   letter-spacing: 0.06em;
   color: light-dark(rgba(0, 0, 0, 0.3), rgba(255, 255, 255, 0.3));
   text-transform: uppercase;
 }
 
+/* Single-line "□ NAME vs NAME □" needs real width; below md it gets cramped, so
+   stack the matchup into a clean vertical "□ NAME / vs / □ NAME" list. */
+@mixin smaller-than md {
+  .matchup {
+    flex-direction: column;
+    align-items: flex-start;
+    column-gap: 0;
+    row-gap: clamp(8px, 1.4vh, 14px);
+  }
+
+  /* Stacked, the mirror reads awkwardly (NAME □ under □ NAME); un-mirror so both
+     corners read "□ NAME" as a clean vertical list. */
+  .cornerEnd {
+    flex-direction: row;
+  }
+
+  /* The vs mark sits on its own line between the two corners — pull it inline
+     with the thumbnails' left edge so the column reads as one ledger entry. */
+  .vs {
+    padding-left: calc(clamp(40px, 4.6vw, 84px) + clamp(10px, 1.2vw, 16px));
+  }
+}
+
 @mixin smaller-than sm {
   .chapter {
     padding-top: 72px;
     padding-bottom: 72px;
-  }
-
-  .matchup {
-    flex-direction: column;
-    align-items: flex-start;
   }
 }

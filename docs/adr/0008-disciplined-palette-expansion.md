@@ -16,3 +16,5 @@ Keep monochrome + red as the identity, but assign colors strict, exclusive jobs 
 - **One semantic win/loss pair** — used only inside data visualization (records, matchup bars). Never in chrome or navigation.
 
 Nothing else enters the palette. The discipline is the system; rejected alternatives were two-color purism (data screens become hard to scan) and expressive per-division hues (dilutes the black/red identity).
+
+**Scope carve-out:** this ADR governs the UI palette (chrome — surfaces, borders, text, accents); full-color *photographic content* (e.g. fighter imagery in the Hero Face-off and the Card Chapter's Corner Thumbnails) is out of scope and does not count against it. See ADR 0009.

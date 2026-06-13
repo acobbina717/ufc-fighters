@@ -18,6 +18,8 @@ function bout(overrides: Partial<LedgerBout> = {}): LedgerBout {
     division: 'mens',
     fighterAName: 'A Fighter',
     fighterBName: 'B Fighter',
+    fighterAPhotoUrl: 'https://ufc.com/a.png',
+    fighterBPhotoUrl: 'https://ufc.com/b.png',
     ...overrides,
   }
 }
@@ -72,6 +74,19 @@ describe('groupBoutsByTier', () => {
       bout({ boutOrder: 3, cardTier: 'prelim', fighterBName: null }),
     ])
     expect(sections[0].bouts[0].fighterBName).toBeNull()
+  })
+
+  it('carries corner photo refs through grouping for both present and absent cases', () => {
+    const sections = groupBoutsByTier([
+      bout({
+        boutOrder: 2,
+        cardTier: 'main',
+        fighterAPhotoUrl: 'https://ufc.com/has.png',
+        fighterBPhotoUrl: null, // opponent with no photo / TBA
+      }),
+    ])
+    expect(sections[0].bouts[0].fighterAPhotoUrl).toBe('https://ufc.com/has.png')
+    expect(sections[0].bouts[0].fighterBPhotoUrl).toBeNull()
   })
 
   it('labels every tier per the fight-poster vocabulary', () => {

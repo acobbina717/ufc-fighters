@@ -1,5 +1,9 @@
+/* The closing exhale. Mode-aware so it reads as part of the page in both schemes
+   (was a hardcoded black band that ignored light mode); a hairline top edge sets
+   it apart from the divisions grid above. */
 .root {
-  background: #000;
+  background: light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-9));
+  border-top: 1px solid light-dark(var(--mantine-color-gray-3), rgba(255, 255, 255, 0.08));
   padding: 15vh 8vw;
   display: flex;
   flex-direction: column;
@@ -11,7 +15,7 @@
   font-size: clamp(36px, 5vw, 72px);
   line-height: 1.05;
   letter-spacing: -0.01em;
-  color: #fff;
+  color: light-dark(var(--mantine-color-dark-9), #fff);
   text-transform: uppercase;
   margin: 0;
 }

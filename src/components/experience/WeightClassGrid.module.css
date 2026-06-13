@@ -2,7 +2,9 @@
   position: relative;
   max-width: 1000px;
   margin: 0 auto;
-  padding: 0 var(--mantine-spacing-md);
+  /* Vertical breathing room so the bento isn't flush against the Card above or
+     the closing exhale below. */
+  padding: clamp(72px, 11vh, 140px) var(--mantine-spacing-md);
   container-type: inline-size;
 }
 

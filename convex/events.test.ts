@@ -246,6 +246,40 @@ describe('getNextEventCard', () => {
     expect(card!.bouts[2]).toMatchObject({ cardTier: 'prelim', division: 'womens' })
   })
 
+  it('returns a per-corner photo ref for each bout when both fighters have photos', async () => {
+    const t = convexTest(schema, modules)
+    await t.run(async (ctx) => {
+      const a = await ctx.db.insert('fighters', fighter('Photo A', { photoUrl: 'https://ufc.com/a.png' }))
+      const b = await ctx.db.insert('fighters', fighter('Photo B', { photoUrl: 'https://ufc.com/b.png' }))
+      const eventId = await ctx.db.insert('events', {
+        name: 'UFC 342', date: Date.now() + 24 * HOUR, venue: '', location: '', slug: 'ufc-342', lastSynced: 0,
+      })
+      await ctx.db.insert('bouts', { eventId, fighterAId: a, fighterBId: b, weightClass: 'lightweight', cardTier: 'prelim', boutOrder: 4 })
+    })
+
+    const card = await t.query(api.events.getNextEventCard, {})
+    expect(card!.bouts[0]).toMatchObject({
+      fighterAPhotoUrl: 'https://ufc.com/a.png',
+      fighterBPhotoUrl: 'https://ufc.com/b.png',
+    })
+  })
+
+  it('yields a null photo for a TBA corner and for a named fighter with no photo on file', async () => {
+    const t = convexTest(schema, modules)
+    await t.run(async (ctx) => {
+      // fighterA is named but has no photoUrl; fighterB is TBA (absent)
+      const a = await ctx.db.insert('fighters', fighter('No Photo'))
+      const eventId = await ctx.db.insert('events', {
+        name: 'UFC 343', date: Date.now() + 24 * HOUR, venue: '', location: '', slug: 'ufc-343', lastSynced: 0,
+      })
+      await ctx.db.insert('bouts', { eventId, fighterAId: a, weightClass: 'lightweight', cardTier: 'prelim', boutOrder: 5 })
+    })
+
+    const card = await t.query(api.events.getNextEventCard, {})
+    expect(card!.bouts[0].fighterAPhotoUrl).toBeNull()
+    expect(card!.bouts[0].fighterBPhotoUrl).toBeNull()
+  })
+
   it('returns a null fighterBName for a TBA opponent', async () => {
     const t = convexTest(schema, modules)
     await t.run(async (ctx) => {

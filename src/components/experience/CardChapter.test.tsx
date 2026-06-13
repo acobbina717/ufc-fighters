@@ -38,6 +38,8 @@ function bout(overrides: Partial<LedgerBout> = {}): LedgerBout {
     division: 'mens',
     fighterAName: 'A Fighter',
     fighterBName: 'B Fighter',
+    fighterAPhotoUrl: 'https://ufc.com/a.png',
+    fighterBPhotoUrl: 'https://ufc.com/b.png',
     ...overrides,
   }
 }
@@ -126,6 +128,61 @@ describe('CardChapter ledger', () => {
   })
 })
 
+describe('CardChapter Corner Thumbnails (#39 / ADR 0009)', () => {
+  it('renders two full-color square thumbnails flanking a bout when both fighters have photos', () => {
+    const { container } = renderChapter({
+      eventName: 'UFC 350',
+      bouts: [
+        bout({
+          boutOrder: 2,
+          fighterAName: 'Pereira',
+          fighterBName: 'Ankalaev',
+          fighterAPhotoUrl: 'https://ufc.com/pereira.png',
+          fighterBPhotoUrl: 'https://ufc.com/ankalaev.png',
+        }),
+      ],
+    })
+    const imgs = [...container.querySelectorAll('img')]
+    expect(imgs).toHaveLength(2)
+    expect(imgs.map((i) => i.getAttribute('src'))).toEqual([
+      'https://ufc.com/pereira.png',
+      'https://ufc.com/ankalaev.png',
+    ])
+  })
+
+  it('renders the silhouette fallback (no image) for a missing-photo corner and a TBA corner, keeping an identical slot', () => {
+    const { container } = renderChapter({
+      eventName: 'UFC 351',
+      bouts: [
+        bout({
+          boutOrder: 2,
+          fighterAName: 'No Photo',
+          fighterAPhotoUrl: null, // named fighter, no photo on file
+          fighterBName: null, // TBA opponent
+          fighterBPhotoUrl: null,
+        }),
+      ],
+    })
+    // Every row keeps two photo slots regardless; neither resolves to an <img>.
+    expect(container.querySelectorAll('.mantine-Avatar-root')).toHaveLength(2)
+    expect(container.querySelectorAll('img')).toHaveLength(0)
+    expect(container.querySelectorAll('.mantine-Avatar-placeholder')).toHaveLength(2)
+  })
+
+  it('marks thumbnails decorative — empty alt and aria-hidden, so the names carry meaning', () => {
+    const { container } = renderChapter({
+      eventName: 'UFC 352',
+      bouts: [bout({ boutOrder: 2 })], // FULL base bout carries both photos
+    })
+    container.querySelectorAll('img').forEach((img) => {
+      expect(img.getAttribute('alt')).toBe('')
+    })
+    container.querySelectorAll('.mantine-Avatar-root').forEach((root) => {
+      expect(root.getAttribute('aria-hidden')).toBe('true')
+    })
+  })
+})
+
 // The reveal behaviour is GSAP-on-scroll, which jsdom can't exercise — assert
 // the wiring against the component source, per the #15 pattern.
 const src = readFileSync('src/components/experience/CardChapter.tsx', 'utf8')
@@ -169,5 +226,12 @@ describe('CardChapter reveal wiring (#30)', () => {
 
   it('re-measures ScrollTriggers when the live query mounts the ledger', () => {
     expect(src).toContain('scheduleScrollTriggerRefresh()')
+  })
+
+  it('rides thumbnails on the existing row batch — no separate per-photo trigger (ADR 0009)', () => {
+    // Exactly one batch, targeting the row; thumbnails animate only as part of
+    // their [data-ledger-row] li, so reduced-motion leaves them visible too.
+    expect((src.match(/ScrollTrigger\.batch/g) ?? []).length).toBe(1)
+    expect(src).toContain("'[data-ledger-row]'")
   })
 })

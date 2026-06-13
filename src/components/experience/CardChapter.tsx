@@ -1,9 +1,12 @@
 // Chapter — THE CARD (issue #30). A normally-flowing (deliberately UNPINNED)
 // typographic fight-poster ledger of the next event's remaining bouts, between
 // the pinned Hero and the Weight Class Grid: the journey reads pin → flow → pin.
-// No photography; "NAME vs NAME" rows grouped under Card Tier dividers. Rows
-// stagger in on viewport entry; under reduced motion they are simply visible.
+// "□ NAME vs NAME □" rows grouped under Card Tier dividers, each corner flanked
+// by a full-color square Corner Thumbnail (ADR 0009) with a silhouette fallback
+// for missing-photo / TBA corners. Rows (thumbnails included) stagger in on
+// viewport entry; under reduced motion they are simply visible.
 import { useEffect, useRef } from 'react'
+import { Avatar } from '@mantine/core'
 import { api } from '../../../convex/_generated/api'
 import { useStableQuery } from '#/hooks/useStableQuery'
 import {
@@ -91,15 +94,41 @@ export default function CardChapter() {
                   <span className={classes.weightClass}>
                     {boutWeightClassLabel(bout.weightClass, bout.division)} BOUT
                   </span>
-                  <p className={classes.matchup}>
-                    <span className={classes.fighter}>
-                      {cornerDisplay(bout.fighterAName)}
+                  <div className={classes.matchup}>
+                    <span className={classes.corner}>
+                      <Avatar
+                        src={bout.fighterAPhotoUrl}
+                        alt=""
+                        aria-hidden="true"
+                        radius={0}
+                        className={classes.thumb}
+                        classNames={{
+                          image: classes.thumbImage,
+                          placeholder: classes.thumbPlaceholder,
+                        }}
+                      />
+                      <span className={classes.fighter}>
+                        {cornerDisplay(bout.fighterAName)}
+                      </span>
                     </span>
                     <span className={classes.vs}>vs</span>
-                    <span className={bout.fighterBName ? classes.fighter : classes.tba}>
-                      {cornerDisplay(bout.fighterBName)}
+                    <span className={`${classes.corner} ${classes.cornerEnd}`}>
+                      <span className={bout.fighterBName ? classes.fighter : classes.tba}>
+                        {cornerDisplay(bout.fighterBName)}
+                      </span>
+                      <Avatar
+                        src={bout.fighterBPhotoUrl}
+                        alt=""
+                        aria-hidden="true"
+                        radius={0}
+                        className={classes.thumb}
+                        classNames={{
+                          image: classes.thumbImage,
+                          placeholder: classes.thumbPlaceholder,
+                        }}
+                      />
                     </span>
-                  </p>
+                  </div>
                 </li>
               ))}
             </ol>
