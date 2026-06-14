@@ -33,18 +33,20 @@
 }
 
 /*
- * Women's bento (4 divisions). Bantamweight (left) and Featherweight (right) are
- * full-height sentinels flanking a centre column of Strawweight over Flyweight.
+ * Women's bento (3 divisions). Bantamweight is the single left sentinel (tall,
+ * prestige anchor); Strawweight over Flyweight fill the remaining width as
+ * full-width landscape bands. No right sentinel — Women's Featherweight is not an
+ * active ranked division.
  */
 .womens {
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   grid-template-rows: 1fr 1fr;
   /* Taller grid (1.6:1) so the Strawweight/Flyweight bands read as landscape heroes
-     (~1.6:1) and the BW/FW sentinels match the men's tall portrait proportions. */
+     and the BW sentinel matches the men's tall portrait proportions. */
   aspect-ratio: 8 / 5;
   grid-template-areas:
-    "bw stw stw fw"
-    "bw fly fly fw";
+    "bw stw stw"
+    "bw fly fly";
 }
 
 /* Below sm, the bento collapses to a single full-width column with no overflow. */

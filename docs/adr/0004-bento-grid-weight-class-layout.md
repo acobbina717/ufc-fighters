@@ -31,16 +31,16 @@ Heavyweight (left, tall) and Lt. Heavyweight (right, tall) flank a center column
 └──────────┴──────────┴────────┴─────────┴──────────┘
 ```
 
-### Women's layout (4 divisions)
+### Women's layout (3 divisions)
 
-Bantamweight (left, tall) and Featherweight (right, tall) flank a center column with Strawweight and Flyweight stacked.
+Women's Featherweight is omitted — the UFC has no active ranked division for it. With three divisions, Bantamweight is the single left sentinel (tall, prestige anchor); Strawweight and Flyweight stack as full-width landscape bands in the remaining space. No right sentinel.
 
 ```
-┌──────────┬──────────────┬──────────┐
-│          │  STRAWWEIGHT │          │
-│ BANTAM-  ├──────────────┤ FEATHER- │
-│ WEIGHT   │  FLYWEIGHT   │ WEIGHT   │
-└──────────┴──────────────┴──────────┘
+┌──────────┬──────────────────────────┐
+│          │       STRAWWEIGHT        │
+│ BANTAM-  ├──────────────────────────┤
+│ WEIGHT   │        FLYWEIGHT         │
+└──────────┴──────────────────────────┘
 ```
 
 ### Card details
@@ -48,7 +48,7 @@ Bantamweight (left, tall) and Featherweight (right, tall) flank a center column 
 - **Base**: Mantine `Card`, `radius={0}`, full-bleed champion photo
 - **Label**: bottom-left overlay on a dark gradient — division name + weight range (e.g. "206 – 265 LBS")
 - **Frame Sweep**: SVG `<rect>` overlay. Perimeter is deterministic (`2 × (w + h)`), no arc geometry. Sweep + sheen run as one composed GSAP timeline — segment grows in, sweeps the perimeter, sheen fires as segment crosses center, both fade on leave.
-- **Scroll entry**: flanking sentinel cells (HW/LHW for men's, BW/FW for women's) animate in from left/right first; center column fills in after. Deliberate deviation from issue #15: the initial hidden state is set inside the `gsap.matchMedia` desktop branch, **not** via CSS `opacity: 0` as the issue specified — pure-CSS hiding would leave mobile and reduced-motion users (where the entrance never runs) with invisible cards. `useGSAP` runs pre-paint, so there is no flash. Do not "fix" this back to CSS.
+- **Scroll entry**: flanking sentinel cells (HW/LHW for men's, BW only for women's) animate in from the edge first; center column fills in after. Deliberate deviation from issue #15: the initial hidden state is set inside the `gsap.matchMedia` desktop branch, **not** via CSS `opacity: 0` as the issue specified — pure-CSS hiding would leave mobile and reduced-motion users (where the entrance never runs) with invisible cards. `useGSAP` runs pre-paint, so there is no flash. Do not "fix" this back to CSS.
 - **Click**: GSAP Flip expand-to-fullscreen replacing the previous DOM clone hack.
 - **Division Toggle**: integrated as a section header directly above the grid (not a separate floating section).
 

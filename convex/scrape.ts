@@ -333,7 +333,7 @@ export const scrapeWeightClass = action({
     for (const ranked of rankedFighters) {
       const db = bySlug.get(ranked.ufcSlug)
       const isNew   = !db
-      const isStale = !db || (now - db.lastSynced) > STALE_MS
+      const isStale = !db || (now - db.lastSynced) > STALE_MS || !db.country
       const rankingChanged = db && db.ranking !== ranked.ranking
 
       // ── Fresh fighter whose ranking hasn't changed → skip entirely

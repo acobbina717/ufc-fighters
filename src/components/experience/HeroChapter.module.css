@@ -133,49 +133,6 @@
   transform-origin: left center;
 }
 
-/* Content block */
-.content {
-  position: absolute;
-  bottom: 15%;
-  left: max(150px, 12vw);
-  right: max(150px, 12vw);
-}
-
-.eyebrow {
-  font-family: var(--mantine-font-family-headings);
-  font-weight: 700;
-  font-size: 13px;
-  letter-spacing: 0.4em;
-  color: var(--mantine-color-ufcRed-6);
-  margin: 0 0 16px;
-  text-transform: uppercase;
-  opacity: 0;
-}
-
-.title {
-  font-family: var(--mantine-font-family-headings);
-  font-weight: 800;
-  font-size: clamp(64px, 12vw, 160px);
-  line-height: 0.88;
-  letter-spacing: -0.025em;
-  color: light-dark(#000, #fff);
-  text-transform: uppercase;
-  margin: 0 0 20px;
-  overflow: hidden;
-  opacity: 0;
-}
-
-.subtitle {
-  font-family: var(--mantine-font-family-headings);
-  font-weight: 700;
-  font-size: 14px;
-  letter-spacing: 0.3em;
-  color: light-dark(rgba(0, 0, 0, 0.6), rgba(255, 255, 255, 0.6));
-  margin: 0;
-  text-transform: uppercase;
-  opacity: 0;
-}
-
 /* Scroll hint */
 .scrollHint {
   position: absolute;
@@ -210,30 +167,10 @@
 }
 
 @mixin smaller-than sm {
-  /* CSS baseline — elements visible by default on mobile.
-     GSAP only animates y offset, not opacity, so content
-     remains visible even if GSAP fails to run. */
-  .eyebrow {
-    opacity: 1;
-  }
-
-  .title {
-    font-size: clamp(48px, 14vw, 80px);
-    opacity: 1;
-  }
-
-  .subtitle {
-    opacity: 1;
-  }
-
   .slash {
     /* Mobile: fades in via opacity, not scaleX */
     transform: scaleX(1);
     opacity: 1;
-  }
-
-  .content {
-    bottom: 12%;
   }
 
   /* No pinned scroll on mobile — hint is misleading */

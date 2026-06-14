@@ -60,9 +60,9 @@ describe('WeightClassGrid bento layout', () => {
     expect(container.querySelectorAll('a').length).toBe(8)
   })
 
-  it("renders 4 cards for the women's grid", () => {
+  it("renders 3 cards for the women's grid", () => {
     const { container } = renderGrid('womens')
-    expect(container.querySelectorAll('a').length).toBe(4)
+    expect(container.querySelectorAll('a').length).toBe(3)
   })
 
   it("marks the two flanking sentinels in the men's grid", () => {
@@ -72,11 +72,13 @@ describe('WeightClassGrid bento layout', () => {
     expect(container.querySelector('[data-sentinel="right"]')).not.toBeNull()
   })
 
-  it("marks the two flanking sentinels in the women's grid", () => {
+  it("marks Bantamweight as the only sentinel in the women's grid (no right)", () => {
     const { container } = renderGrid('womens')
-    expect(container.querySelectorAll('[data-sentinel]').length).toBe(2)
+    // 3 divisions: Bantamweight is the single left sentinel; Strawweight and
+    // Flyweight are full-width landscape bands. There is no right sentinel.
+    expect(container.querySelectorAll('[data-sentinel]').length).toBe(1)
     expect(container.querySelector('[data-sentinel="left"]')).not.toBeNull()
-    expect(container.querySelector('[data-sentinel="right"]')).not.toBeNull()
+    expect(container.querySelector('[data-sentinel="right"]')).toBeNull()
   })
 
   it('leaves no clip-path-era custom properties in the grid CSS', () => {

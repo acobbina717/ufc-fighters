@@ -36,8 +36,10 @@ function sentinelFor(gender: Gender, slug: string): 'left' | 'right' | undefined
     if (slug === 'heavyweight') return 'left'
     if (slug === 'lightheavyweight') return 'right'
   } else {
+    // Women's has 3 divisions: Bantamweight is the single left sentinel. There is
+    // no right sentinel — Women's Featherweight is not an active ranked division,
+    // so Strawweight + Flyweight render as full-width landscape bands instead.
     if (slug === 'bantamweight') return 'left'
-    if (slug === 'featherweight') return 'right'
   }
   return undefined
 }
@@ -50,10 +52,12 @@ function sentinelFor(gender: Gender, slug: string): 'left' | 'right' | undefined
 type CellFormat = 'tall' | 'wide' | 'square'
 const WIDE_CELLS = new Set([
   'middleweight', 'welterweight', 'lightweight', // men's centre bands
-  'strawweight',                                  // women's centre band (flyweight resolves via gender below)
+  'strawweight',                                  // women's top landscape band
 ])
 function formatFor(gender: Gender, slug: string): CellFormat {
   if (sentinelFor(gender, slug)) return 'tall'
+  // Women's Flyweight is a full-width landscape band (matches Strawweight). Men's
+  // Flyweight stays square — it's a small bottom-row cell, not a band.
   if (gender === 'womens' && slug === 'flyweight') return 'wide'
   if (WIDE_CELLS.has(slug)) return 'wide'
   return 'square'
@@ -87,7 +91,11 @@ export default function WeightClassGrid() {
     mm.add(
       DESKTOP_MOTION_QUERY,
       () => {
-        gsap.set([left, right], { opacity: 0 })
+        // Women's bento has no right sentinel (3 divisions), so `right` is null
+        // there — filter it out before handing targets to GSAP to avoid
+        // null-target warnings and an invalidated tween on the timeline.
+        const sentinels = [left, right].filter(Boolean)
+        gsap.set(sentinels, { opacity: 0 })
         gsap.set(center, { opacity: 0 })
 
         const tl = gsap.timeline({
@@ -102,31 +110,33 @@ export default function WeightClassGrid() {
           { x: 0, opacity: 1, duration: 0.7, ease: 'power3.out' },
           0,
         )
-          .fromTo(
+        if (right) {
+          tl.fromTo(
             right,
             { x: 120, opacity: 0 },
             { x: 0, opacity: 1, duration: 0.7, ease: 'power3.out' },
             0,
           )
-          // ...then the center column fills in with a stagger on a short overlap.
-          // DOM order is ascending weight (flyweight first), so stagger from the
-          // end: the heaviest division leads and the fill sweeps top-to-bottom,
-          // matching the bento's editorial hierarchy.
-          // Scope clearProps to the animated props only — `clearProps: 'all'` does
-          // `style.cssText = ''`, wiping each card's inline `grid-area`.
-          .fromTo(
-            center,
-            { y: 30, opacity: 0 },
-            {
-              y: 0,
-              opacity: 1,
-              duration: 0.6,
-              stagger: { each: 0.07, from: 'end' },
-              ease: 'power2.out',
-              clearProps: 'transform,opacity',
-            },
-            0.2,
-          )
+        }
+        // ...then the center column fills in with a stagger on a short overlap.
+        // DOM order is ascending weight (flyweight first), so stagger from the
+        // end: the heaviest division leads and the fill sweeps top-to-bottom,
+        // matching the bento's editorial hierarchy.
+        // Scope clearProps to the animated props only — `clearProps: 'all'` does
+        // `style.cssText = ''`, wiping each card's inline `grid-area`.
+        tl.fromTo(
+          center,
+          { y: 30, opacity: 0 },
+          {
+            y: 0,
+            opacity: 1,
+            duration: 0.6,
+            stagger: { each: 0.07, from: 'end' },
+            ease: 'power2.out',
+            clearProps: 'transform,opacity',
+          },
+          0.2,
+        )
       },
     )
   }, { scope: gridRef, dependencies: [gender], revertOnUpdate: true })
