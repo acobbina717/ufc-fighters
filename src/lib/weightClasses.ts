@@ -26,7 +26,8 @@ export const WOMENS_DIVISIONS: WeightClassDef[] = [
   { key: 'womens-strawweight',    label: "Women's Strawweight",     shortLabel: 'Strawweight',      abbr: 'STW',  division: 'womens', weightLimit: '115 lbs', weightFloor: '' },
   { key: 'womens-flyweight',      label: "Women's Flyweight",       shortLabel: 'Flyweight',        abbr: 'FLW',  division: 'womens', weightLimit: '125 lbs', weightFloor: '116 lbs' },
   { key: 'womens-bantamweight',   label: "Women's Bantamweight",    shortLabel: 'Bantamweight',     abbr: 'BW',   division: 'womens', weightLimit: '135 lbs', weightFloor: '126 lbs' },
-  { key: 'womens-featherweight',  label: "Women's Featherweight",   shortLabel: 'Featherweight',    abbr: 'FW',   division: 'womens', weightLimit: '145 lbs', weightFloor: '136 lbs' },
+  // Women's Featherweight omitted — the UFC has no active ranked division for it,
+  // so it always scrapes empty and isn't shown. See ADR 0010.
 ]
 
 /**

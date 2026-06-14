@@ -7,7 +7,6 @@ import { api } from '../../convex/_generated/api'
 import { gsap, SplitText, useGSAP, scheduleScrollTriggerRefresh } from '#/lib/gsap'
 import type { Doc } from '../../convex/_generated/dataModel'
 import type { Gender } from '#/lib/weightClasses'
-import { useStaleSync } from '#/hooks/useStaleSync'
 import FighterSpotlight from '#/components/experience/FighterSpotlight'
 import classes from '#/components/experience/DivisionTimeline.module.css'
 
@@ -72,8 +71,6 @@ function DivisionRouteComponent() {
   })
 
   const allLoaded = fighters !== undefined
-
-  useStaleSync(fighters, `${gender}-${weightClass}`)
 
   const beats = useMemo<Beat[]>(() => {
     if (!allLoaded || !fighters) return []

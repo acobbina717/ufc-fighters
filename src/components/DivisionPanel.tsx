@@ -5,7 +5,6 @@ import { gsap, useGSAP, SplitText } from "#/lib/gsap";
 import { MENS_DIVISIONS, WOMENS_DIVISIONS } from "#/lib/weightClasses";
 import { Badge, ScrollArea, UnstyledButton } from "@mantine/core";
 import type { Doc } from "../../convex/_generated/dataModel";
-import { useStaleSync } from "#/hooks/useStaleSync";
 import classes from "./DivisionPanel.module.css";
 
 interface DivisionPanelProps {
@@ -25,8 +24,6 @@ export default function DivisionPanel({
     weightClass,
     division: gender,
   });
-
-  useStaleSync(fighters, activeDivision);
 
   const [selectedFighter, setSelectedFighter] =
     useState<Doc<"fighters"> | null>(null);

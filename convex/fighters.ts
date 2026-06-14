@@ -1,5 +1,8 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
+import type { MutationCtx } from './_generated/server'
+import type { Id } from './_generated/dataModel'
+import { shouldPruneFighter } from './lib/fighterPrune'
 
 export const getByWeightClass = query({
   args: {
@@ -160,10 +163,88 @@ export const patchFighter = mutation({
   },
 })
 
+// Removes ghost fighters from a weight class after a rankings scrape (ADR 0010).
+// A fighter is deleted only when absent from the freshly-scraped ranked slug set
+// AND holding no upcoming and no past bouts — any bout history is retained for
+// matchup analysis. The ranked slugs come from the scrape action; bout counts are
+// resolved here via the per-fighter indexes. Returns the number pruned.
+export const pruneFighters = mutation({
+  args: {
+    weightClass: v.string(),
+    division: v.union(v.literal('mens'), v.literal('womens')),
+    rankedSlugs: v.array(v.string()),
+  },
+  handler: async (ctx, { weightClass, division, rankedSlugs }) => {
+    const ranked = new Set(rankedSlugs)
+    const fighters = await ctx.db
+      .query('fighters')
+      .withIndex('by_weight_class_division', (q) =>
+        q.eq('weightClass', weightClass).eq('division', division)
+      )
+      .collect()
+
+    let pruned = 0
+    for (const fighter of fighters) {
+      // Ranked fighters never need a bout lookup — skip the index reads.
+      if (ranked.has(fighter.ufcUrl)) continue
+
+      const { upcoming, past } = await countBouts(ctx, fighter._id)
+      if (shouldPruneFighter(ranked, fighter.ufcUrl, upcoming, past)) {
+        await ctx.db.delete(fighter._id)
+        pruned++
+      }
+    }
+    return pruned
+  },
+})
+
+// Counts a fighter's bouts split into upcoming (event in the future) and past,
+// across both corner indexes. A fighter can appear in either corner, so both
+// by_fighter_a and by_fighter_b are queried.
+async function countBouts(
+  ctx: MutationCtx,
+  fighterId: Id<'fighters'>,
+): Promise<{ upcoming: number; past: number }> {
+  const now = Date.now()
+  const asA = await ctx.db
+    .query('bouts')
+    .withIndex('by_fighter_a', (q) => q.eq('fighterAId', fighterId))
+    .collect()
+  const asB = await ctx.db
+    .query('bouts')
+    .withIndex('by_fighter_b', (q) => q.eq('fighterBId', fighterId))
+    .collect()
+
+  let upcoming = 0
+  let past = 0
+  for (const bout of [...asA, ...asB]) {
+    const event = await ctx.db.get(bout.eventId)
+    if (!event) continue
+    if (event.date > now) upcoming++
+    else past++
+  }
+  return { upcoming, past }
+}
+
 export const getAllFighters = query({
   args: {},
   handler: async (ctx) => {
     return ctx.db.query('fighters').collect()
+  },
+})
+
+// Cold-start signal: true when at least one champion (ranking 0) exists, meaning
+// the rankings have been scraped at least once. A wiped DB — or one holding only
+// fight-card fighters from scrapeEvents (which never sets a ranking) — returns
+// false, telling the daily fighter cron to run a full backfill. See ADR 0010.
+export const hasRankedFighters = query({
+  args: {},
+  handler: async (ctx) => {
+    const champion = await ctx.db
+      .query('fighters')
+      .filter((q) => q.eq(q.field('ranking'), 0))
+      .first()
+    return champion !== null
   },
 })
 

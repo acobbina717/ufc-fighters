@@ -64,16 +64,16 @@ The utilitarian routes — Home (fighters list), Fighters, and Matchup pages —
 The single site-wide navigation element: a compact, collapsible floating pill anchored to the **top-right** of every route. **Starts collapsed** (sessionStorage remembers the last open/closed state across page transitions). In collapsed state only two controls are visible: the color-scheme toggle (leftmost) and the hamburger icon (rightmost). On expand, the pill grows leftward — the color-scheme toggle moves left as nav links stagger in via GSAP — revealing `[ ☀️/🌙 ] [ 🏠 ] Fighters  Matchup  —  [ ✕ ]`. The hamburger is replaced by ✕ when open; never both visible. The Experience link renders as a Lucide `Home` icon (no label). Recedes/auto-hides during scroll-driven cinematic sequences so it never competes with chapter compositions.
 
 ### Event
-A scheduled UFC event stored in the `events` table. Fields: name (e.g. "UFC 314"), date (Unix timestamp), venue, location, lastSynced. Indexed by date. Past events are kept indefinitely to power fight history. Scraped from `ufc.com/events` via a daily Convex cron — server-side, not client-triggered. All upcoming events (typically 2–4 months out) are stored, not just the next one.
+A scheduled UFC event stored in the `events` table. Fields: name, date (Unix ms), venue, location, slug, lastSynced, fightersScrapedAt (optional). Past events are kept indefinitely to power fight history and matchup analysis. Scraped from `ufc.com/events` via a daily Convex cron. `fightersScrapedAt` is stamped when post-event fighter scraping completes for that event, enabling retry semantics.
 
 ### Bout
-A single scheduled fight within an Event, stored in the `bouts` table. References `fighterAId` (always the known fighter) and optionally `fighterBId` (absent = TBA until opponent announced). Fields: eventId, weightClass, cardTier (main / prelim / early_prelim), boutOrder (1 = main event). Indexed by eventId, fighterAId, and fighterBId. Enables "NEXT FIGHT" badges and fight history per fighter without scanning all events.
+A single scheduled fight within an Event, stored in the `bouts` table. References `fighterAId` (always the known fighter) and optionally `fighterBId` (absent = TBA until opponent announced). Fields: eventId, weightClass, cardTier (main / prelim / early_prelim), boutOrder (1 = main event). Indexed by eventId, fighterAId, and fighterBId. Used for upcoming fights (NEXT FIGHT badges) and retained indefinitely for past fight history and matchup analysis.
 
 ### Card Tier
 The broadcast tier of a Bout within an Event: `main` (PPV main card), `prelim` (ESPN prelims), or `early_prelim` (UFC Fight Pass). Determines display hierarchy on event cards.
 
 ### Fighter Activity
-A fighter is considered active if they appear in the UFC rankings OR on an upcoming fight card. Activity is enforced structurally by the scraping strategy — we only store fighters with a live reason to be active. There is no stored `isActive` flag; presence in the database implies activity at last sync.
+Fighter data is refreshed server-side by a Convex cron, triggered approximately 24 hours after each event using the weight classes present in that event's bouts. Rankings and stats only change meaningfully after fights occur, so post-event scraping is the single source of truth — no client-triggered scraping. A fighter is pruned from the database only when all three conditions are met: absent from current rankings, no upcoming bouts, and no past bouts. Fighters with fight history are retained even if unranked, because past bouts are used for matchup analysis.
 
 ### Page Shell
 The shared layout wrapper for App Routes, defining the only sanctioned container widths (content / wide / full), the type scale, and the vertical rhythm (section spacing in fixed steps of the theme spacing scale). App pages compose inside it rather than defining their own max-widths.

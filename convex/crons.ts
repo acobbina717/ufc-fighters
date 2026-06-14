@@ -12,4 +12,13 @@ crons.daily(
   api.scrape.scrapeEvents
 )
 
+// Refresh fighter rankings/records/stats for divisions that fought 24–48h ago.
+// Event-driven rather than daily-for-all: fighter data only changes after a card
+// finishes, so this targets just the weight classes that had bouts. See ADR 0010.
+crons.daily(
+  'scrape post-event weight classes',
+  { hourUTC: 9, minuteUTC: 0 },
+  api.scrape.scrapePostEventWeightClasses
+)
+
 export default crons

@@ -46,6 +46,9 @@ export default defineSchema({
     location: v.string(),
     slug: v.string(),            // ufc.com/event/{slug} — used for idempotent upsert
     lastSynced: v.number(),
+    // Stamped (Unix ms) once post-event fighter scraping completes for this event.
+    // Null/absent until then — drives post-event cron eligibility and retry. See ADR 0010.
+    fightersScrapedAt: v.optional(v.number()),
   })
     .index("by_date", ["date"])
     .index("by_slug", ["slug"]),

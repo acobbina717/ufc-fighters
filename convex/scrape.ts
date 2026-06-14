@@ -4,6 +4,10 @@ import { api } from './_generated/api'
 import type { Id } from './_generated/dataModel'
 import type { ActionCtx } from './_generated/server'
 import { parseEventCard, parseEventListing, parseEventVenue } from './lib/eventParse'
+import {
+  getEligiblePostEventWeightClasses,
+  isPostEventSyncEligible,
+} from './lib/postEventSync'
 
 // Maps our division keys to the section title on ufc.com/rankings
 const RANKINGS_SECTION_TITLE: Record<string, { title: string; division: 'mens' | 'womens' }> = {
@@ -18,8 +22,15 @@ const RANKINGS_SECTION_TITLE: Record<string, { title: string; division: 'mens' |
   'womens-strawweight':    { title: "Women&#039;s Strawweight",    division: 'womens' },
   'womens-flyweight':      { title: "Women&#039;s Flyweight",      division: 'womens' },
   'womens-bantamweight':   { title: "Women&#039;s Bantamweight",   division: 'womens' },
-  'womens-featherweight':  { title: "Women&#039;s Featherweight",  division: 'womens' },
+  // Women's Featherweight is intentionally omitted: the UFC has no active ranked
+  // division for it, so it would only ever scrape empty. A one-off women's FW
+  // bout still renders via its cardLedger label. See ADR 0010.
 }
+
+// Every weight class with an active rankings section — the backfill set for a
+// cold-start / full reseed. Derived from RANKINGS_SECTION_TITLE so empty
+// divisions (e.g. women's featherweight) are never scraped.
+const ALL_RANKING_KEYS = Object.keys(RANKINGS_SECTION_TITLE)
 
 const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
 
@@ -275,9 +286,17 @@ function parseDetailPage(html: string): { stats: FighterStats; nickname?: string
 const STALE_MS = 24 * 60 * 60 * 1000
 
 // ─── Main export ──────────────────────────────────────────────────────────────
+interface ScrapeWeightClassResult {
+  fullScrape: number
+  metaOnly: number
+  skipped: number
+  pruned?: number
+  weightClass?: string
+}
+
 export const scrapeWeightClass = action({
   args: { weightClassKey: v.string() },
-  handler: async (ctx, { weightClassKey }) => {
+  handler: async (ctx, { weightClassKey }): Promise<ScrapeWeightClassResult> => {
     if (!RANKINGS_SECTION_TITLE[weightClassKey]) {
       console.log(`${weightClassKey} has no rankings — skipping`)
       return { fullScrape: 0, metaOnly: 0, skipped: 0 }
@@ -299,6 +318,15 @@ export const scrapeWeightClass = action({
     if (!rankingsRes.ok) throw new Error(`Rankings fetch failed: ${rankingsRes.status}`)
     const rankedFighters = parseRankingsPage(await rankingsRes.text(), weightClassKey)
     if (rankedFighters.length === 0) return { fullScrape: 0, metaOnly: 0, skipped: 0 }
+
+    // Prune ghost fighters: anyone in the DB for this weight class who has dropped
+    // off the rankings and has no bout history (ADR 0010). Runs before the upsert
+    // pass so deletions don't race the writes below.
+    const pruned = await ctx.runMutation(api.fighters.pruneFighters, {
+      weightClass,
+      division,
+      rankedSlugs: rankedFighters.map((f) => f.ufcSlug),
+    })
 
     let fullScrape = 0, metaOnly = 0, skipped = 0
 
@@ -412,8 +440,8 @@ export const scrapeWeightClass = action({
       fullScrape++
     }
 
-    console.log(`${weightClassKey}: fullScrape=${fullScrape} metaOnly=${metaOnly} skipped=${skipped}`)
-    return { fullScrape, metaOnly, skipped, weightClass: weightClassKey }
+    console.log(`${weightClassKey}: fullScrape=${fullScrape} metaOnly=${metaOnly} skipped=${skipped} pruned=${pruned}`)
+    return { fullScrape, metaOnly, skipped, pruned, weightClass: weightClassKey }
   },
 })
 
@@ -620,6 +648,96 @@ export const scrapeEvents = action({
 
     console.log(`scrapeEvents: ${upcoming.length} events, ${boutCount} bouts, ${fightersScraped} new fighters`)
     return { events: upcoming.length, bouts: boutCount, fightersScraped }
+  },
+})
+
+// Scrapes every ranked division sequentially. The backfill primitive for a
+// cold-start / full reseed. Sequential (not parallel) to avoid bursting outbound
+// requests to ufc.com. See ADR 0010.
+export const scrapeAllWeightClasses = action({
+  args: {},
+  handler: async (ctx): Promise<{ weightClasses: number; fullScrape: number }> => {
+    let fullScrape = 0
+    for (const weightClassKey of ALL_RANKING_KEYS) {
+      try {
+        const res = await ctx.runAction(api.scrape.scrapeWeightClass, { weightClassKey })
+        fullScrape += res.fullScrape
+      } catch (err) {
+        console.error(`backfill scrape failed for ${weightClassKey}:`, err)
+      }
+    }
+    console.log(`scrapeAllWeightClasses: ${ALL_RANKING_KEYS.length} divisions, ${fullScrape} fighters fully scraped`)
+    return { weightClasses: ALL_RANKING_KEYS.length, fullScrape }
+  },
+})
+
+// One-shot full reseed: rebuilds events + every ranked division in a single run.
+// Run after wiping the DB — `npx convex run scrape:seedDatabase`. This is the
+// single command that gets everything back in place. See ADR 0010.
+export const seedDatabase = action({
+  args: {},
+  handler: async (
+    ctx
+  ): Promise<{ events: number; bouts: number; fightersScraped: number; weightClasses: number }> => {
+    const events = await ctx.runAction(api.scrape.scrapeEvents)
+    const divisions = await ctx.runAction(api.scrape.scrapeAllWeightClasses)
+    console.log(
+      `seedDatabase: ${events.events} events, ${events.bouts} bouts, ${divisions.weightClasses} divisions`
+    )
+    return { ...events, weightClasses: divisions.weightClasses }
+  },
+})
+
+// Post-event fighter refresh (ADR 0010). Cron-triggered daily. Finds events that
+// passed 24–48h ago whose fighters haven't been re-scraped yet, scrapes the
+// distinct weight classes those events fought (sequentially, to avoid bursting
+// ufc.com), then stamps each event so it won't be re-targeted. A failed run
+// leaves fightersScrapedAt null and is retried on the next daily execution.
+export const scrapePostEventWeightClasses = action({
+  args: {},
+  handler: async (ctx): Promise<{ events: number; weightClasses: number; coldStart?: boolean }> => {
+    const now = Date.now()
+
+    // Cold-start self-heal: if the rankings have never been scraped (wiped DB, or
+    // a DB holding only fight-card fighters), the post-event diff has nothing to
+    // work from. Backfill every division instead. This is the server-side
+    // replacement for the deleted useStaleSync bootstrap. See ADR 0010.
+    const seeded = await ctx.runQuery(api.fighters.hasRankedFighters)
+    if (!seeded) {
+      const result = await ctx.runAction(api.scrape.scrapeAllWeightClasses)
+      console.log(`scrapePostEventWeightClasses: cold start — backfilled ${result.weightClasses} divisions`)
+      return { events: 0, weightClasses: result.weightClasses, coldStart: true }
+    }
+
+    const candidates = await ctx.runQuery(api.events.getPostEventScrapeCandidates)
+
+    const weightClasses = getEligiblePostEventWeightClasses(candidates, now)
+    if (weightClasses.length === 0) {
+      console.log('scrapePostEventWeightClasses: nothing eligible')
+      return { events: 0, weightClasses: 0 }
+    }
+
+    // Sequential, not parallel — parallel would fire every division's outbound
+    // rankings + per-fighter fetches at ufc.com simultaneously.
+    for (const weightClassKey of weightClasses) {
+      try {
+        await ctx.runAction(api.scrape.scrapeWeightClass, { weightClassKey })
+      } catch (err) {
+        console.error(`post-event scrape failed for ${weightClassKey}:`, err)
+      }
+    }
+
+    // Stamp every event whose data this run was responsible for. Done after the
+    // scrape so a thrown scrape leaves the event unstamped for next-run retry.
+    const eligibleEvents = candidates.filter((c) => isPostEventSyncEligible(c, now))
+    for (const event of eligibleEvents) {
+      await ctx.runMutation(api.events.stampFightersScraped, { eventId: event.eventId })
+    }
+
+    console.log(
+      `scrapePostEventWeightClasses: ${eligibleEvents.length} events, ${weightClasses.length} weight classes`
+    )
+    return { events: eligibleEvents.length, weightClasses: weightClasses.length }
   },
 })
 

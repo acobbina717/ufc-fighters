@@ -155,6 +155,59 @@ export const replaceEventBouts = mutation({
   },
 })
 
+const DAY_MS = 24 * 60 * 60 * 1000
+
+// Events that have passed at least 24h ago and have not yet had their fighters
+// re-scraped. Each candidate carries the distinct gendered weight-class keys
+// (e.g. "mens-welterweight") drawn from its bouts so the post-event action can
+// feed them straight into the pure eligibility helper (#49). The 48h ceiling is
+// applied by that helper, not here. See ADR 0010.
+export const getPostEventScrapeCandidates = query({
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now()
+    const events = await ctx.db
+      .query('events')
+      .withIndex('by_date', (q) => q.lt('date', now - DAY_MS))
+      .collect()
+
+    const candidates = []
+    for (const event of events) {
+      if (event.fightersScrapedAt !== undefined) continue
+
+      const bouts = await ctx.db
+        .query('bouts')
+        .withIndex('by_event', (q) => q.eq('eventId', event._id))
+        .collect()
+
+      const weightClasses = new Set<string>()
+      for (const bout of bouts) {
+        // Bouts store only the bare weight-class slug; the gendered division
+        // (needed to match a rankings key) rides on the anchor fighter.
+        const fighterA = await ctx.db.get(bout.fighterAId)
+        if (fighterA) weightClasses.add(`${fighterA.division}-${bout.weightClass}`)
+      }
+
+      candidates.push({
+        eventId: event._id,
+        date: event.date,
+        fightersScrapedAt: event.fightersScrapedAt ?? null,
+        weightClasses: [...weightClasses],
+      })
+    }
+    return candidates
+  },
+})
+
+// Stamps fightersScrapedAt on an event once its post-event fighter scrape
+// completes, marking it done so the cron won't re-target it.
+export const stampFightersScraped = mutation({
+  args: { eventId: v.id('events') },
+  handler: async (ctx, { eventId }) => {
+    await ctx.db.patch(eventId, { fightersScrapedAt: Date.now() })
+  },
+})
+
 // Lightweight lookup table for the scraper to resolve card slugs to fighter ids
 // without pulling every fighter's full document.
 export const ufcUrlToId = query({
