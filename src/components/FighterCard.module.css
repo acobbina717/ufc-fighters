@@ -25,7 +25,7 @@
   color: #fff;
   font-family: var(--mantine-font-family-headings);
   font-weight: 800;
-  font-size: 11px;
+  font-size: 13px;
   letter-spacing: 0.1em;
   padding: 2px 7px;
   border-radius: var(--mantine-radius-xs);
@@ -68,7 +68,13 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, var(--mantine-primary-color-6), #ff6b00, var(--mantine-primary-color-6));
+  /* Champion gold (ADR 0008) — belt iconography is the one place gold is allowed. */
+  background: linear-gradient(
+    90deg,
+    var(--mantine-color-gold-6),
+    var(--mantine-color-gold-4),
+    var(--mantine-color-gold-6)
+  );
 }
 
 .info {
@@ -87,7 +93,7 @@
 }
 
 .nickname {
-  font-size: 12px;
+  font-size: 13px;
   color: light-dark(#888, var(--mantine-color-dark-2));
   font-style: italic;
   margin-bottom: 6px;
@@ -104,12 +110,14 @@
   letter-spacing: 0.04em;
 }
 
+/* Semantic win/loss pair (ADR 0008), mode-aware: deep -6 shades fail contrast on a
+   dark surface, so dark mode steps up to the lighter -4 shade. */
 .wins {
-  color: #16a34a;
+  color: light-dark(var(--mantine-color-win-6), var(--mantine-color-win-4));
 }
 
 .losses {
-  color: var(--mantine-primary-color-6);
+  color: light-dark(var(--mantine-color-loss-6), var(--mantine-color-loss-4));
 }
 
 .draws {
@@ -121,7 +129,7 @@
 }
 
 .country {
-  font-size: 12px;
+  font-size: 13px;
   color: light-dark(#999, var(--mantine-color-dark-2));
   margin-top: 4px;
 }

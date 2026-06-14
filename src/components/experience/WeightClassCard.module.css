@@ -116,7 +116,7 @@
 
 .range {
   font-family: var(--mantine-font-family-monospace);
-  font-size: clamp(11px, 1.4cqw, 14px);
+  font-size: clamp(13px, 1.6cqw, 16px);
   letter-spacing: 0.12em;
   color: var(--mantine-color-gray-3);
 }

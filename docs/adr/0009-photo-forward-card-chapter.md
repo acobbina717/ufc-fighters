@@ -24,3 +24,7 @@ Add restrained **full-color** fighter imagery to the ledger **without changing i
 - The journey-rhythm rationale is **reframed**: the contrast is no longer photo vs. no-photo, but **scale and pacing** — small inline thumbnails in calm unpinned flow vs. large full-screen *pinned* compositions on either side. The pin → flow → pin shape is the thing being preserved, not the absence of imagery.
 - `getNextEventCard` (`convex/events.ts`) must return a **photo ref per corner** (it currently returns names only). `cardLedger.ts`'s `LedgerBout` gains photo fields; the silhouette fallback is a render concern, not a query concern.
 - Rejected: full photo-card layout (declined — pushes THE CARD into a third photo chapter and dissolves the contrast entirely); grayscale/duotone photos (declined — user chose full color); per-corner "show whatever exists" fallback (declined — asymmetric rows look lopsided against the centered vs mark).
+
+## Amendment — 2026-06-13
+
+The "full photo-card layout" rejection above has been reversed. Each bout is now a UFC-website-style bordered card (`light-dark` adaptive background) with photo-driven height (~280px) and large rectangular fighter photos (`object-fit: cover; object-position: top`, head/shoulders crop) bleeding to the card edges. Fighter names and country flags occupy a center strip. The journey-rhythm contrast (pin → flow → pin) is now carried entirely by scale and pacing — the Card Chapter's bordered cards are visually quieter than the full-screen pinned compositions flanking it — not by the absence of large imagery.

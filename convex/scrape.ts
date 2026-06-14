@@ -57,6 +57,43 @@ function parseNum(val: string): number {
   return isNaN(n) ? 0 : n
 }
 
+// ─── Nationality parser ───────────────────────────────────────────────────────
+// UFC athlete pages encode nationality as a demonym (e.g. "American", "Brazilian").
+// We normalise to a full country name so it matches the COUNTRY_ISO map in cardLedger.ts.
+const DEMONYM_TO_COUNTRY: Record<string, string> = {
+  American: 'United States', Brazilian: 'Brazil', Russian: 'Russia',
+  Canadian: 'Canada', Mexican: 'Mexico', Australian: 'Australia',
+  'New Zealander': 'New Zealand', Irish: 'Ireland', British: 'United Kingdom',
+  English: 'United Kingdom', Scottish: 'United Kingdom', Welsh: 'United Kingdom',
+  Polish: 'Poland', Georgian: 'Georgia', French: 'France', German: 'Germany',
+  Dutch: 'Netherlands', Swedish: 'Sweden', Norwegian: 'Norway', Finnish: 'Finland',
+  Danish: 'Denmark', Spanish: 'Spain', Italian: 'Italy', Portuguese: 'Portugal',
+  Swiss: 'Switzerland', Austrian: 'Austria', Belgian: 'Belgium', Croatian: 'Croatia',
+  Serbian: 'Serbia', Czech: 'Czechia', Slovak: 'Slovakia', Lithuanian: 'Lithuania',
+  Moldovan: 'Moldova', Ukrainian: 'Ukraine', Belarusian: 'Belarus', Turkish: 'Turkey',
+  Greek: 'Greece', Icelandic: 'Iceland', Chinese: 'China', Japanese: 'Japan',
+  'South Korean': 'South Korea', Korean: 'South Korea', Thai: 'Thailand',
+  Filipino: 'Philippines', Singaporean: 'Singapore', Indian: 'India',
+  Indonesian: 'Indonesia', Kazakhstani: 'Kazakhstan', Kyrgyz: 'Kyrgyzstan',
+  Uzbek: 'Uzbekistan', Azerbaijani: 'Azerbaijan', Armenian: 'Armenia',
+  Iranian: 'Iran', Peruvian: 'Peru', Ecuadorian: 'Ecuador', Colombian: 'Colombia',
+  Venezuelan: 'Venezuela', Argentinian: 'Argentina', Chilean: 'Chile',
+  Bolivian: 'Bolivia', Paraguayan: 'Paraguay', Uruguayan: 'Uruguay',
+  Jamaican: 'Jamaica', Puerto: 'Puerto Rico', Nigerian: 'Nigeria',
+  'South African': 'South Africa', Cameroonian: 'Cameroon', Congolese: 'DR Congo',
+  Moroccan: 'Morocco', Egyptian: 'Egypt', Jordanian: 'Jordan', Bahraini: 'Bahrain',
+  Israeli: 'Israel', Iraqi: 'Iraq',
+}
+
+function parseAthleteCountry(html: string): string | undefined {
+  // UFC athlete pages list nationality as a labelled bio field.
+  // Pattern: "Nationality" label followed (within ~300 chars) by the value in a text element.
+  const m = html.match(/Nationality[\s\S]{0,300}?<div[^>]*class="[^"]*c-bio__text[^"]*"[^>]*>\s*([^<]+?)\s*</)
+  if (!m) return undefined
+  const raw = m[1].trim()
+  return DEMONYM_TO_COUNTRY[raw] ?? raw
+}
+
 // ─── Step 1: Parse ufc.com/rankings ──────────────────────────────────────────
 interface RankedFighter {
   name: string
@@ -288,21 +325,22 @@ export const scrapeWeightClass = action({
       }
 
       // ── New fighter or stale data → full fetch: photo + ufcstats search + detail page
-      // Always fetch the athlete page to get the full-body image
+      // Always fetch the athlete page to get the full-body image and nationality
       let photoUrl: string | undefined
+      let country: string | undefined
       try {
         const res = await fetch(`https://www.ufc.com/athlete/${ranked.ufcSlug}`, {
           headers: { 'User-Agent': UA, Accept: 'text/html' },
         })
         if (res.ok) {
           const html = await res.text()
-          // Prefer full-body image (athlete_bio_full_body style)
           const fullBody = html.match(/src="(https?:\/\/ufc\.com\/images\/styles\/athlete_bio_full_body\/[^"]+)"/)
           if (fullBody?.[1]) {
             photoUrl = await downloadAndStorePhoto(ctx.storage, fullBody[1])
           }
+          country = parseAthleteCountry(html)
         }
-      } catch { /* keep going without photo */ }
+      } catch { /* keep going without photo or country */ }
 
       let wins = 0, losses = 0, draws = 0
       let nickname: string | undefined
@@ -349,6 +387,7 @@ export const scrapeWeightClass = action({
           record: { wins, losses, draws, noContests: 0 },
           stats,
           weight,
+          country,
           photoUrl,
           ufcUrl: ranked.ufcSlug,
           ufcStatsUrl,
@@ -362,6 +401,7 @@ export const scrapeWeightClass = action({
           photoUrl: photoUrl ?? undefined,
           nickname,
           weight,
+          country,
           weightClass,
           division,
           record: { wins, losses, draws, noContests: 0 },

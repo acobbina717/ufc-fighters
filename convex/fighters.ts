@@ -114,6 +114,7 @@ export const patchFighter = mutation({
       submissionAvg: v.number(),
     })),
     weight: v.optional(v.string()),
+    country: v.optional(v.string()),
     lastSynced: v.optional(v.number()),
   },
   handler: async (ctx, { ufcUrl, ...fields }) => {
@@ -150,6 +151,8 @@ export const patchFighter = mutation({
     }
     if (fields.weight !== undefined && fields.weight !== existing.weight)
       patch.weight = fields.weight
+    if (fields.country !== undefined && fields.country !== existing.country)
+      patch.country = fields.country
     if (fields.lastSynced !== undefined)
       patch.lastSynced = fields.lastSynced
 

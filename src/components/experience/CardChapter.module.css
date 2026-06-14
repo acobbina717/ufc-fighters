@@ -67,9 +67,9 @@
 .tierLabel {
   font-family: var(--mantine-font-family-headings);
   font-weight: 700;
-  font-size: 12px;
+  font-size: 13px;
   letter-spacing: 0.45em;
-  color: light-dark(rgba(0, 0, 0, 0.45), rgba(255, 255, 255, 0.45));
+  color: light-dark(rgba(0, 0, 0, 0.65), rgba(255, 255, 255, 0.65));
   text-transform: uppercase;
   margin: 0;
   white-space: nowrap;
@@ -85,74 +85,99 @@
   list-style: none;
   margin: 0;
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(12px, 2vh, 20px);
 }
 
 .boutRow {
-  padding: clamp(20px, 3vh, 40px) 0;
-  border-bottom: 1px solid light-dark(rgba(0, 0, 0, 0.07), rgba(255, 255, 255, 0.07));
-}
-
-.boutRow:last-child {
-  border-bottom: none;
+  background: light-dark(#fff, var(--mantine-color-dark-7));
+  border: 1px solid light-dark(rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.12));
+  border-radius: var(--mantine-radius-md);
+  box-shadow: light-dark(
+    0 2px 16px rgba(0, 0, 0, 0.08),
+    0 4px 24px rgba(0, 0, 0, 0.45)
+  );
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .weightClass {
   display: block;
+  text-align: center;
+  padding: 14px 24px 10px;
   font-family: var(--mantine-font-family-headings);
   font-weight: 700;
-  font-size: 11px;
-  letter-spacing: 0.32em;
-  color: light-dark(rgba(0, 0, 0, 0.38), rgba(255, 255, 255, 0.38));
+  font-size: 13px;
+  letter-spacing: 0.28em;
+  color: light-dark(rgba(0, 0, 0, 0.65), rgba(255, 255, 255, 0.65));
   text-transform: uppercase;
-  margin-bottom: 6px;
+  border-bottom: 1px solid light-dark(rgba(0, 0, 0, 0.07), rgba(255, 255, 255, 0.07));
 }
 
 .matchup {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  column-gap: clamp(16px, 2vw, 28px);
-  row-gap: 2px;
-  margin: 0;
+  align-items: stretch;
+  min-height: clamp(200px, 24vw, 280px);
+  flex-wrap: nowrap;
+  column-gap: 0;
+  row-gap: 0;
 }
 
-/* A corner = its photo-column (Thumbnail above its Country Flag Row) glued to
-   its name, so the pair stays together when the row wraps. The closing corner
-   mirrors the order (name then photo-column) for "□ NAME vs NAME □" symmetry. */
+/* A corner = photo on the extreme edge + nameCol pushing toward VS center. */
 .corner {
   display: flex;
   align-items: center;
+  flex: 1;
+  overflow: hidden;
   gap: clamp(12px, 1.4vw, 20px);
-  min-width: 0;
+  padding: 16px clamp(16px, 2vw, 28px);
 }
 
 .cornerEnd {
-  flex-direction: row-reverse;
+  justify-content: flex-end;
 }
 
-/* Photo-column — the Corner Thumbnail stacked above its Country Flag Row. */
+/* Photo-column — bleeds to top/bottom edges of the card. */
 .photoCol {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
   flex-shrink: 0;
+  align-self: stretch;
+  margin: -16px 0;
 }
 
-/* Country Flag Row (issue #45) — neutral chrome (never an accent), the same
-   quiet register as the weight-class label. Absent entirely when no country. */
+/* Country Flag Row — now inside nameCol, beside the fighter name. */
 .flagRow {
   display: flex;
   align-items: center;
   gap: 6px;
   font-family: var(--mantine-font-family-headings);
   font-weight: 700;
-  font-size: clamp(10px, 0.9vw, 13px);
-  letter-spacing: 0.18em;
-  color: light-dark(rgba(0, 0, 0, 0.5), rgba(255, 255, 255, 0.5));
+  font-size: 13px;
+  letter-spacing: 0.14em;
+  color: light-dark(rgba(0, 0, 0, 0.65), rgba(255, 255, 255, 0.65));
   text-transform: uppercase;
   white-space: nowrap;
+}
+
+.nameCol {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.corner:not(.cornerEnd) .nameCol {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.cornerEnd .nameCol {
+  align-items: flex-start;
+  text-align: left;
 }
 
 .flag {
@@ -162,19 +187,20 @@
   line-height: 1;
 }
 
-/* Corner Thumbnail (ADR 0009) — sharp square (radius={0}), full color, a
-   downscaled head/shoulder crop of the full-body source (never upscaled).
-   --avatar-size overrides Mantine's Avatar sizing token so the square can
-   scale fluidly with the row. No frame or backstop (issue #45): the source PNGs
-   are transparent and sit directly against the chapter background. */
+/* Corner Thumbnail (ADR 0009) — tall rectangle, full color, head/shoulders crop
+   bleeding to the card's top and bottom edges. --avatar-size overrides Mantine's
+   Avatar sizing token. No frame or backstop: transparent PNGs sit directly
+   against the chapter background. */
 .thumb {
-  --avatar-size: clamp(56px, 6vw, 120px);
+  --avatar-size: clamp(130px, 15vw, 200px);
+  width: clamp(130px, 15vw, 200px);
+  height: 100%;
   flex-shrink: 0;
+  align-self: stretch;
 }
 
 .thumbImage {
-  /* Mantine's Avatar image is object-fit: cover already; pull the crop to the
-     top so the head/shoulders read rather than the chest. */
+  object-fit: cover;
   object-position: top;
 }
 
@@ -199,10 +225,12 @@
 .vs {
   font-family: var(--mantine-font-family-headings);
   font-weight: 700;
-  font-size: clamp(13px, 1.6vw, 18px);
+  font-size: clamp(14px, 1.6vw, 20px);
   letter-spacing: 0.18em;
   color: var(--mantine-color-ufcRed-6);
   text-transform: uppercase;
+  flex-shrink: 0;
+  padding: 0 clamp(8px, 1vw, 16px);
 }
 
 /* Unannounced opponent — quieter than a named fighter, never an accent. */
@@ -212,17 +240,15 @@
   font-size: clamp(28px, 4vw, 64px);
   line-height: 1.05;
   letter-spacing: 0.06em;
-  color: light-dark(rgba(0, 0, 0, 0.3), rgba(255, 255, 255, 0.3));
+  color: light-dark(rgba(0, 0, 0, 0.55), rgba(255, 255, 255, 0.55));
   text-transform: uppercase;
 }
 
-/* The single-line "□ NAME vs NAME □" needs real width; below md it gets cramped.
-   Re-flow into a 3-column grid: photo-columns flank the names, which stack down
-   the center as "NAME A / vs / NAME B". display: contents lifts each corner's
-   photo-column and name out to become direct grid items so they can be placed
-   into the side and center tracks independently of their corner grouping.
-   Raw @media (Mantine md = 62em) — this project has no postcss-preset-mantine,
-   so @mixin at-rules are dropped silently; plain @media is the working idiom. */
+/* Below md the horizontal card layout collapses to a 3-column grid: photos
+   anchor on the extreme sides, fighter names and flags stack in the center.
+   display: contents lifts each corner's children out to become direct grid
+   items placed into side and center tracks independently.
+   Raw @media (Mantine md = 62em) — no postcss-preset-mantine in this project. */
 @media (max-width: 62em) {
   .matchup {
     display: grid;
@@ -231,22 +257,36 @@
     justify-content: stretch;
     column-gap: clamp(12px, 3.5vw, 24px);
     row-gap: clamp(6px, 1.4vh, 12px);
+    min-height: 0;
+    flex-wrap: unset;
   }
 
   .corner {
     display: contents;
   }
 
-  /* Opening corner: photo-column on the left, name in the center top. */
+  .thumb {
+    --avatar-size: clamp(80px, 18vw, 130px);
+    width: clamp(80px, 18vw, 130px);
+    height: auto;
+    align-self: auto;
+  }
+
+  .photoCol {
+    margin: 0;
+    align-self: auto;
+  }
+
+  /* Opening corner: photo-column on the left, nameCol in the center top. */
   .corner:not(.cornerEnd) .photoCol {
     grid-column: 1;
     grid-row: 1 / span 3;
   }
 
-  .corner:not(.cornerEnd) .fighter,
-  .corner:not(.cornerEnd) .tba {
+  .corner:not(.cornerEnd) .nameCol {
     grid-column: 2;
     grid-row: 1;
+    align-items: center;
     text-align: center;
   }
 
@@ -255,13 +295,14 @@
     grid-column: 2;
     grid-row: 2;
     text-align: center;
+    padding: 0;
   }
 
-  /* Closing corner: name center bottom, photo-column on the right. */
-  .cornerEnd .fighter,
-  .cornerEnd .tba {
+  /* Closing corner: nameCol center bottom, photo-column on the right. */
+  .cornerEnd .nameCol {
     grid-column: 2;
     grid-row: 3;
+    align-items: center;
     text-align: center;
   }
 

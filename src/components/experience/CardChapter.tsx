@@ -149,6 +149,13 @@ function Corner({
           placeholder: classes.thumbPlaceholder,
         }}
       />
+    </span>
+  )
+  const nameEl = (
+    <span className={classes.nameCol}>
+      <span className={name ? classes.fighter : classes.tba}>
+        {cornerDisplay(name)}
+      </span>
       {country && (
         <span className={classes.flagRow} data-flag-row>
           {flag && (
@@ -159,11 +166,6 @@ function Corner({
           <span className={classes.flagName}>{country.toUpperCase()}</span>
         </span>
       )}
-    </span>
-  )
-  const nameEl = (
-    <span className={name ? classes.fighter : classes.tba}>
-      {cornerDisplay(name)}
     </span>
   )
   return (

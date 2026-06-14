@@ -97,7 +97,7 @@
   font-size: var(--mantine-font-size-xs);
   font-weight: 800;
   text-transform: uppercase;
-  color: light-dark(rgba(0, 0, 0, 0.45), rgba(255, 255, 255, 0.3));
+  color: light-dark(rgba(0, 0, 0, 0.65), rgba(255, 255, 255, 0.55));
   font-family: var(--mantine-font-family-headings);
 }
 
@@ -143,7 +143,7 @@
   color: light-dark(rgba(0, 0, 0, 0.6), rgba(255, 255, 255, 0.5));
   font-family: var(--mantine-font-family-headings);
   font-weight: 700;
-  font-size: 9px;
+  font-size: 13px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   padding: 4px 8px;
@@ -185,7 +185,7 @@
 
 .nickname {
   font-size: var(--mantine-font-size-sm);
-  color: light-dark(rgba(0, 0, 0, 0.55), rgba(255, 255, 255, 0.45));
+  color: light-dark(rgba(0, 0, 0, 0.7), rgba(255, 255, 255, 0.65));
   font-style: italic;
 }
 
@@ -198,20 +198,21 @@
 .recordWins {
   font-size: var(--mantine-font-size-sm);
   font-weight: 700;
-  /* Semantic win color, mode-aware: the light shade fails contrast on white. */
-  color: light-dark(#16a34a, #4ade80);
+  /* Semantic win color (ADR 0008), mode-aware: the deep shade fails contrast on white. */
+  color: light-dark(var(--mantine-color-win-6), var(--mantine-color-win-4));
   font-family: var(--mantine-font-family-headings);
 }
 
 .recordDot {
   font-size: var(--mantine-font-size-sm);
-  color: light-dark(rgba(0, 0, 0, 0.25), rgba(255, 255, 255, 0.2));
+  color: light-dark(rgba(0, 0, 0, 0.55), rgba(255, 255, 255, 0.55));
 }
 
 .recordLosses {
   font-size: var(--mantine-font-size-sm);
   font-weight: 700;
-  color: var(--mantine-color-ufcRed-6);
+  /* Semantic loss color (ADR 0008) — crimson, not brand red. */
+  color: light-dark(var(--mantine-color-loss-6), var(--mantine-color-loss-4));
   font-family: var(--mantine-font-family-headings);
 }
 
@@ -224,7 +225,7 @@
 
 .country {
   font-size: var(--mantine-font-size-xs);
-  color: light-dark(rgba(0, 0, 0, 0.5), rgba(255, 255, 255, 0.35));
+  color: light-dark(rgba(0, 0, 0, 0.7), rgba(255, 255, 255, 0.6));
 }
 
 /* ── Loading dots ── */
@@ -349,7 +350,7 @@
 .recordText {
   font-size: var(--mantine-font-size-xs);
   font-weight: 700;
-  color: light-dark(rgba(0, 0, 0, 0.5), rgba(255, 255, 255, 0.35));
+  color: light-dark(rgba(0, 0, 0, 0.7), rgba(255, 255, 255, 0.6));
   font-family: var(--mantine-font-family-headings);
   flex-shrink: 0;
 }

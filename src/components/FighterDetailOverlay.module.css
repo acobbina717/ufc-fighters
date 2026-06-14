@@ -106,7 +106,7 @@
 }
 
 .metaBadge {
-  font-size: 11px !important;
+  font-size: 13px !important;
   letter-spacing: 0.08em !important;
   font-family: var(--mantine-font-family-headings) !important;
   font-weight: 700 !important;
@@ -128,12 +128,13 @@
   line-height: 1 !important;
 }
 
+/* Semantic win/loss pair (ADR 0008), mode-aware. Loss is crimson, not brand red. */
 .recordNum[data-type='wins'] {
-  color: #16a34a !important;
+  color: light-dark(var(--mantine-color-win-6), var(--mantine-color-win-4)) !important;
 }
 
 .recordNum[data-type='losses'] {
-  color: var(--mantine-primary-color-6) !important;
+  color: light-dark(var(--mantine-color-loss-6), var(--mantine-color-loss-4)) !important;
 }
 
 .recordNum[data-type='draws'] {
@@ -141,7 +142,7 @@
 }
 
 .recordLabel {
-  font-size: 11px !important;
+  font-size: 13px !important;
   letter-spacing: 0.1em !important;
   text-transform: uppercase !important;
   color: light-dark(#999, var(--mantine-color-dark-3)) !important;
@@ -159,7 +160,7 @@
 }
 
 .statLabel {
-  font-size: 11px !important;
+  font-size: 13px !important;
   color: light-dark(#666, var(--mantine-color-dark-2)) !important;
   text-align: center !important;
   text-transform: uppercase !important;

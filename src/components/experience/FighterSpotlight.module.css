@@ -101,7 +101,7 @@
   justify-content: center;
   font-family: var(--mantine-font-family-headings);
   font-weight: 800;
-  font-size: 11px;
+  font-size: 13px;
   color: light-dark(#000, #fff);
   line-height: 1;
 }
@@ -115,9 +115,9 @@
 .statLabel {
   font-family: var(--mantine-font-family-headings);
   font-weight: 800;
-  font-size: 10px;
+  font-size: 13px;
   letter-spacing: 0.2em;
-  color: light-dark(rgba(0, 0, 0, 0.45), rgba(255, 255, 255, 0.35));
+  color: light-dark(rgba(0, 0, 0, 0.65), rgba(255, 255, 255, 0.6));
   text-transform: uppercase;
   line-height: 1.2;
 }
@@ -125,9 +125,9 @@
 .statSubLabel {
   font-family: var(--mantine-font-family-headings);
   font-weight: 700;
-  font-size: 9px;
+  font-size: 13px;
   letter-spacing: 0.15em;
-  color: light-dark(rgba(0, 0, 0, 0.3), rgba(255, 255, 255, 0.2));
+  color: light-dark(rgba(0, 0, 0, 0.55), rgba(255, 255, 255, 0.55));
   text-transform: uppercase;
 }
 
@@ -144,7 +144,7 @@
 .country {
   font-size: 14px;
   letter-spacing: 0.1em;
-  color: light-dark(rgba(0, 0, 0, 0.55), rgba(255, 255, 255, 0.45));
+  color: light-dark(rgba(0, 0, 0, 0.7), rgba(255, 255, 255, 0.65));
   text-transform: uppercase;
 }
 

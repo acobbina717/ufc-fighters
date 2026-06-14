@@ -123,9 +123,13 @@ export default function FighterCard({ fighter, onClick }: FighterCardProps) {
           <div className={classes.nickname}>"{fighter.nickname}"</div>
         )}
         <div className={classes.record}>
-          <span className={classes.wins}>{fighter.record.wins}W</span>
+          <span className={classes.wins} aria-label={`${fighter.record.wins} wins`}>
+            {fighter.record.wins}W
+          </span>
           <span className={classes.sep}> · </span>
-          <span className={classes.losses}>{fighter.record.losses}L</span>
+          <span className={classes.losses} aria-label={`${fighter.record.losses} losses`}>
+            {fighter.record.losses}L
+          </span>
           {fighter.record.draws > 0 && (
             <>
               <span className={classes.sep}> · </span>
