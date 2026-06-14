@@ -84,18 +84,19 @@ describe('CardChapter ledger', () => {
     expect(headings).toEqual(['MAIN CARD', 'PRELIMS', 'EARLY PRELIMS'])
 
     // Each row sits under its correct divider: the list following MAIN CARD
-    // holds the two remaining main-card bouts in bout order.
+    // holds all three main-card bouts (main event included) in bout order.
     const mainList = screen.getByText('MAIN CARD').closest('div')!
       .parentElement!.querySelector('ol')!
     const mainRows = within(mainList).getAllByRole('listitem')
-    expect(mainRows).toHaveLength(2)
-    expect(mainRows[0].textContent).toContain('CO MAIN A')
-    expect(mainRows[1].textContent).toContain('THIRD A')
+    expect(mainRows).toHaveLength(3)
+    expect(mainRows[0].textContent).toContain('HEADLINER A')
+    expect(mainRows[1].textContent).toContain('CO MAIN A')
+    expect(mainRows[2].textContent).toContain('THIRD A')
   })
 
-  it('excludes the main event — the hero owns it', () => {
+  it('includes the main event — THE CARD lists the full card', () => {
     renderChapter(FULL_CARD)
-    expect(screen.queryByText(/HEADLINER/)).toBeNull()
+    expect(screen.getByText(/HEADLINER A/)).toBeTruthy()
   })
 
   it('renders an unannounced opponent as TBA', () => {
@@ -121,12 +122,13 @@ describe('CardChapter ledger', () => {
     expect(container.querySelector('section')).toBeNull()
   })
 
-  it('renders nothing when the card holds only its main event', () => {
+  it('renders the main event when the card holds only that bout', () => {
     const { container } = renderChapter({
       eventName: 'UFC 341',
-      bouts: [bout({ boutOrder: 1 })],
+      bouts: [bout({ boutOrder: 1, cardTier: 'main' })],
     })
-    expect(container.querySelector('section')).toBeNull()
+    expect(container.querySelector('section')).not.toBeNull()
+    expect(screen.getByText('MAIN CARD')).toBeTruthy()
   })
 })
 

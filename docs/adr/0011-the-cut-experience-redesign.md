@@ -1,7 +1,9 @@
 # ADR 0011 — "The Cut": Slash-as-Spine Experience Redesign
 
 ## Status
-Accepted — supersedes the Hero/slash decisions in PRD #54 and the unbuilt plan in issue #58.
+**Superseded by [ADR 0012](0012-remove-the-cut-slash-motif.md) (2026-06-14).** The slash-as-spine motif and everything built on it (the teaser/completing slashes, `RankingsIntro`, the divider-grammar echo, and the global Scroll Rail) were removed; the Hero is now photo-only. Sections below are retained as historical record. The **Seating Grade** photo treatment (§5) and the palette/reduced-motion discipline (§7–8) survive the reversal.
+
+_Originally: Accepted — superseded the Hero/slash decisions in PRD #54 and the unbuilt plan in issue #58._
 
 ## Context
 

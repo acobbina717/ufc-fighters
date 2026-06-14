@@ -1,5 +1,5 @@
 // Chapter — THE CARD (issue #30). A normally-flowing (deliberately UNPINNED)
-// typographic fight-poster ledger of the next event's remaining bouts, between
+// typographic fight-poster ledger of the next event's full bout card, between
 // the pinned Hero and the Weight Class Grid: the journey reads pin → flow → pin.
 // "□ NAME vs NAME □" rows grouped under Card Tier dividers, each corner flanked
 // by a full-color square Corner Thumbnail (ADR 0009) with a silhouette fallback

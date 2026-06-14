@@ -49,8 +49,10 @@
     "bw fly fly";
 }
 
-/* Below sm, the bento collapses to a single full-width column with no overflow. */
-@media (max-width: $mantine-breakpoint-sm) {
+/* Below sm, the bento collapses to a single full-width column with no overflow.
+   Raw 47.99em — no postcss-preset-mantine here, so $mantine-breakpoint-sm would
+   be silently dropped and this collapse would never fire. */
+@media (max-width: 47.99em) {
   .mens,
   .womens {
     grid-template-columns: 1fr;

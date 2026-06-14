@@ -9,14 +9,27 @@
   container-type: inline-size;
 }
 
-.photo,
-.placeholder {
+/* Slot geometry only — the crop contract + grade (filter, bottom-fade,
+   object-fit/position, downscale guard) come from the shared Seating Grade
+   (ADR 0011 §5 / issue #59). object-position is overridden per cell shape below
+   for this card's specific framing needs. */
+.photo {
+  composes: photo from './seatingGrade.module.css';
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
   /* Default (square cells): head-anchored crop. Overridden per cell shape below. */
+  object-position: top center;
+  transform-origin: center 30%;
+}
+
+.placeholder {
+  composes: fallback from './seatingGrade.module.css';
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   object-position: top center;
   transform-origin: center 30%;
 }

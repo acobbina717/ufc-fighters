@@ -37,8 +37,8 @@ export const getNextEvent = query({
 
 // Every bout of the soonest upcoming event, joined with fighter names, for the
 // Card Chapter's typographic ledger (issue #30). Returns the raw bout list —
-// main-event exclusion and tier grouping are the client's pure helper's job
-// (src/lib/cardLedger.ts). fighterBName is null when the opponent is TBA.
+// tier grouping is the client's pure helper's job (src/lib/cardLedger.ts), which
+// lists the full card. fighterBName is null when the opponent is TBA.
 // Each corner also carries a photo ref for the Corner Thumbnail (ADR 0009) and
 // the fighter's country for the Country Flag Row (issue #45); both null for a
 // TBA corner and for a fighter with no photo / country on file.

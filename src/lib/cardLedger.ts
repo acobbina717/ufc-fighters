@@ -1,7 +1,7 @@
 // Pure grouping logic for the Card Chapter (issue #30) — THE CARD's typographic
 // bout ledger. Turns a flat bout list into Card Tier sections in broadcast order
-// (main card → prelims → early prelims), excluding the main event (boutOrder 1 —
-// it owns the hero, matching getNextEvent's main-bout contract). Independent of
+// (main card → prelims → early prelims). THE CARD lists the FULL event card,
+// including the main event (boutOrder 1) the Hero also features. Independent of
 // rendering so it is unit-testable without a DOM or Convex.
 
 export type CardTier = 'main' | 'prelim' | 'early_prelim'
@@ -42,17 +42,16 @@ export const TIER_LABELS: Record<CardTier, string> = {
 const TIER_ORDER: readonly CardTier[] = ['main', 'prelim', 'early_prelim']
 
 /**
- * Groups the remaining bouts of an event under Card Tier dividers.
- * - Excludes the main event (boutOrder 1) — the Hero Chapter owns it.
+ * Groups every bout of an event under Card Tier dividers.
+ * - Includes the main event (boutOrder 1) — THE CARD shows the full fight card.
  * - Tiers appear in broadcast order; a tier with no bouts is omitted entirely.
  * - Within a tier, bouts sort by ascending boutOrder (top of the card first).
  */
 export function groupBoutsByTier(bouts: LedgerBout[]): TierSection[] {
-  const remaining = bouts.filter((b) => b.boutOrder !== 1)
   return TIER_ORDER.map((tier) => ({
     tier,
     label: TIER_LABELS[tier],
-    bouts: remaining
+    bouts: bouts
       .filter((b) => b.cardTier === tier)
       .sort((a, b) => a.boutOrder - b.boutOrder),
   })).filter((section) => section.bouts.length > 0)

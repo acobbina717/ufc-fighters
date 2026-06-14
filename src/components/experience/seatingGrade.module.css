@@ -1,0 +1,80 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   Shared "Seating Grade" photo treatment (issue #59)
+
+   ONE photo treatment, defined once and consumed identically by every place a
+   fighter photo appears: the Hero Face-off silhouette, THE CARD Corner
+   Thumbnails, and the Weight Class Cards. UFC source PNGs are mismatched in
+   exposure/contrast/saturation; this equalizes them so the redesign reads as a
+   single shoot.
+
+   How it is shared (no per-module re-implementation):
+   - The tunable curve + fade live as CSS custom properties on :root (below),
+     so contrast/saturation/fade are tuned in exactly one place.
+   - `.photo` and `.fallback` are the shared classes; each module `composes`
+     them into its own photo/placeholder class. The module still owns slot
+     GEOMETRY (size, aspect, position in its layout); the grade owns the
+     TREATMENT (filter, crop contract, bottom-fade, downscale guard).
+
+   Palette discipline (ADR 0008/0011): no hardcoded UI colors here. The
+   bottom-fade is a MASK (alpha only), so it resolves into whatever base sits
+   behind the photo — #fff in light, #000 in dark — without naming a color.
+   ───────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* Common contrast/saturation curve. Tune the whole site's photographic look
+     from this one declaration. Slight contrast + a touch of saturation pulls
+     flat UFC PNGs toward a consistent, punchy grade. */
+  --seating-grade-filter: contrast(1.06) saturate(1.08) brightness(0.99);
+
+  /* Bottom-fade: where the photo starts dissolving (opaque above, transparent
+     at the base edge). A mask alpha gradient — scheme-independent by
+     construction; the active base (light-dark()) shows through. */
+  --seating-grade-fade-start: 62%;
+  --seating-grade-fade-end: 100%;
+}
+
+/* The shared treatment. Apply to the <img> (or Mantine image element) that
+   fills a slot. The MODULE sets width/height/position; the grade never sets
+   slot size, so it can be composed into any geometry. */
+.photo {
+  /* Crop contract — identical everywhere. */
+  object-fit: cover;
+  object-position: top;
+
+  /* Common grade. */
+  filter: var(--seating-grade-filter);
+
+  /* Bottom-fade into the active base. Mask = alpha only, so it dissolves into
+     #fff (light) or #000 (dark) with no color named here. */
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    #000 0%,
+    #000 var(--seating-grade-fade-start),
+    transparent var(--seating-grade-fade-end)
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    #000 0%,
+    #000 var(--seating-grade-fade-start),
+    transparent var(--seating-grade-fade-end)
+  );
+
+  /* Downscale only — never upscale a raster. `object-fit: cover` renders the
+     source at the slot's resolution; capping intrinsic dimensions keeps a slot
+     larger than the source from blowing the PNG up past 1:1. UFC source PNGs
+     are higher-res than every slot, so in practice the photo is always
+     downscaled. (See ADR 0011 §4 — no interaction scales a raster.) */
+  max-width: 100%;
+  max-height: 100%;
+  image-rendering: auto;
+}
+
+/* Mirrored neutral-silhouette fallback, rendered in an IDENTICAL slot when a
+   photo is missing/TBA. The module places this in the same box as `.photo`; the
+   grade keeps it photographically quiet and scheme-aware. Color drives
+   currentColor-based silhouette glyphs (e.g. Mantine Avatar placeholder). */
+.fallback {
+  object-fit: cover;
+  object-position: top;
+  color: light-dark(rgba(0, 0, 0, 0.28), rgba(255, 255, 255, 0.3));
+}

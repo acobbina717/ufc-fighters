@@ -1,6 +1,6 @@
 // Unit tests for the Card Chapter's pure grouping logic (issue #30): tier
-// grouping in broadcast order, intra-tier bout ordering, main-event exclusion,
-// and the TBA / label display rules — all independent of rendering.
+// grouping in broadcast order, intra-tier bout ordering, full-card inclusion
+// (main event included), and the TBA / label display rules — all independent of rendering.
 import { describe, expect, it } from 'vitest'
 import {
   boutWeightClassLabel,
@@ -51,13 +51,13 @@ describe('groupBoutsByTier', () => {
     ])
   })
 
-  it('excludes the main event (boutOrder 1) — it belongs to the hero', () => {
+  it('includes the main event (boutOrder 1) — THE CARD lists the full card', () => {
     const sections = groupBoutsByTier([
       bout({ boutOrder: 1, cardTier: 'main', fighterAName: 'Headliner' }),
       bout({ boutOrder: 2, cardTier: 'main', fighterAName: 'Co-Main' }),
     ])
     const names = sections.flatMap((s) => s.bouts.map((b) => b.fighterAName))
-    expect(names).toEqual(['Co-Main'])
+    expect(names).toEqual(['Headliner', 'Co-Main'])
   })
 
   it('omits a tier with no bouts entirely', () => {
@@ -68,8 +68,11 @@ describe('groupBoutsByTier', () => {
     expect(sections.map((s) => s.tier)).toEqual(['main', 'early_prelim'])
   })
 
-  it('returns no sections when the card holds only its main event', () => {
-    expect(groupBoutsByTier([bout({ boutOrder: 1 })])).toEqual([])
+  it('shows the main event in its tier even when the card holds only that bout', () => {
+    const sections = groupBoutsByTier([bout({ boutOrder: 1, cardTier: 'main' })])
+    expect(sections).toHaveLength(1)
+    expect(sections[0].tier).toBe('main')
+    expect(sections[0].bouts).toHaveLength(1)
   })
 
   it('keeps TBA bouts (null fighterBName) in their tier', () => {

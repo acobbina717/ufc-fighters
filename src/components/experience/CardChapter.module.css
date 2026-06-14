@@ -199,16 +199,18 @@
   align-self: stretch;
 }
 
+/* Crop + grade come from the shared Seating Grade (ADR 0011 §5 / issue #59):
+   contrast/saturation curve, bottom-fade mask, object-fit: cover/top,
+   downscale-only. This module only owns the thumbnail's slot geometry (.thumb). */
 .thumbImage {
-  object-fit: cover;
-  object-position: top;
+  composes: photo from './seatingGrade.module.css';
 }
 
-/* Silhouette fallback (missing photo / TBA). Mantine's placeholder icon draws
-   with currentColor — a muted neutral keeps it deliberately quiet, matching the
-   TBA name treatment, in both color schemes. */
+/* Silhouette fallback (missing photo / TBA) in the identical thumbnail slot.
+   Mantine's placeholder icon draws with currentColor; the shared `.fallback`
+   keeps it a muted neutral in both color schemes. */
 .thumbPlaceholder {
-  color: light-dark(rgba(0, 0, 0, 0.28), rgba(255, 255, 255, 0.3));
+  composes: fallback from './seatingGrade.module.css';
 }
 
 .fighter {

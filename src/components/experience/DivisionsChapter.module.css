@@ -61,7 +61,7 @@
 
 
 /* ─── Mobile ─────────────────────────────────────────────── */
-@mixin smaller-than sm {
+@media (max-width: 47.99em) {
   .chapter {
     height: auto;
     overflow: visible;
