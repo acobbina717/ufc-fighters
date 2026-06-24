@@ -1,5 +1,19 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
+import type { QueryCtx } from './_generated/server'
+
+// The soonest upcoming event (date strictly after `now`), or null when none.
+// Shared by getNextEvent/getNextEventCard here and getFeaturedFighter in
+// fighters.ts so the "next event" definition lives in one place. Not a pure
+// lib helper — it needs a QueryCtx, so it stays in events.ts rather than
+// moving to convex/lib/.
+export async function findNextEvent(ctx: QueryCtx, now: number) {
+  return ctx.db
+    .query('events')
+    .withIndex('by_date', (q) => q.gt('date', now))
+    .order('asc')
+    .first()
+}
 
 // The soonest upcoming event, joined with its main-event (boutOrder 1) bout and
 // both fighters. Powers the live Hero press pass. fighterB is null when TBA;
@@ -8,11 +22,7 @@ export const getNextEvent = query({
   args: {},
   handler: async (ctx) => {
     const now = Date.now()
-    const event = await ctx.db
-      .query('events')
-      .withIndex('by_date', (q) => q.gt('date', now))
-      .order('asc')
-      .first()
+    const event = await findNextEvent(ctx, now)
     if (!event) return null
 
     const bouts = await ctx.db
@@ -47,11 +57,7 @@ export const getNextEventCard = query({
   args: {},
   handler: async (ctx) => {
     const now = Date.now()
-    const event = await ctx.db
-      .query('events')
-      .withIndex('by_date', (q) => q.gt('date', now))
-      .order('asc')
-      .first()
+    const event = await findNextEvent(ctx, now)
     if (!event) return null
 
     const bouts = await ctx.db

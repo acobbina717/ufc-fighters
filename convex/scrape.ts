@@ -2,12 +2,13 @@ import { action } from './_generated/server'
 import { v } from 'convex/values'
 import { api } from './_generated/api'
 import type { Id } from './_generated/dataModel'
-import type { ActionCtx } from './_generated/server'
 import { parseEventCard, parseEventListing, parseEventVenue } from './lib/eventParse'
 import {
   getEligiblePostEventWeightClasses,
   isPostEventSyncEligible,
 } from './lib/postEventSync'
+import { strip } from './lib/htmlParse'
+import { UA, downloadAndStorePhoto, hydrateFighter } from './lib/fighterHydrate'
 
 // Maps our division keys to the section title on ufc.com/rankings
 const RANKINGS_SECTION_TITLE: Record<string, { title: string; division: 'mens' | 'womens' }> = {
@@ -31,79 +32,6 @@ const RANKINGS_SECTION_TITLE: Record<string, { title: string; division: 'mens' |
 // cold-start / full reseed. Derived from RANKINGS_SECTION_TITLE so empty
 // divisions (e.g. women's featherweight) are never scraped.
 const ALL_RANKING_KEYS = Object.keys(RANKINGS_SECTION_TITLE)
-
-const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-
-// ─── Photo storage helper ──────────────────────────────────────────────────────
-interface StorageLike {
-  store(blob: Blob): Promise<string>
-  getUrl(storageId: string): Promise<string | null>
-}
-
-async function downloadAndStorePhoto(storage: StorageLike, ufcPhotoUrl: string): Promise<string | undefined> {
-  try {
-    const res = await fetch(ufcPhotoUrl, {
-      headers: { 'User-Agent': UA, 'Referer': 'https://www.ufc.com/', Accept: 'image/*' },
-    })
-    if (!res.ok) return undefined
-    const blob = await res.blob()
-    const storageId = await storage.store(blob)
-    return (await storage.getUrl(storageId)) ?? undefined
-  } catch {
-    return undefined
-  }
-}
-
-// ─── HTML helpers ─────────────────────────────────────────────────────────────
-function strip(html: string): string {
-  return html
-    .replace(/<[^>]+>/g, '')
-    .replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ')
-    .replace(/&quot;/g, '"').replace(/&#039;/g, "'")
-    .replace(/\s+/g, ' ').trim()
-}
-
-function parseNum(val: string): number {
-  const n = parseFloat(val.replace('%', ''))
-  return isNaN(n) ? 0 : n
-}
-
-// ─── Nationality parser ───────────────────────────────────────────────────────
-// UFC athlete pages encode nationality as a demonym (e.g. "American", "Brazilian").
-// We normalise to a full country name so it matches the COUNTRY_ISO map in cardLedger.ts.
-const DEMONYM_TO_COUNTRY: Record<string, string> = {
-  American: 'United States', Brazilian: 'Brazil', Russian: 'Russia',
-  Canadian: 'Canada', Mexican: 'Mexico', Australian: 'Australia',
-  'New Zealander': 'New Zealand', Irish: 'Ireland', British: 'United Kingdom',
-  English: 'United Kingdom', Scottish: 'United Kingdom', Welsh: 'United Kingdom',
-  Polish: 'Poland', Georgian: 'Georgia', French: 'France', German: 'Germany',
-  Dutch: 'Netherlands', Swedish: 'Sweden', Norwegian: 'Norway', Finnish: 'Finland',
-  Danish: 'Denmark', Spanish: 'Spain', Italian: 'Italy', Portuguese: 'Portugal',
-  Swiss: 'Switzerland', Austrian: 'Austria', Belgian: 'Belgium', Croatian: 'Croatia',
-  Serbian: 'Serbia', Czech: 'Czechia', Slovak: 'Slovakia', Lithuanian: 'Lithuania',
-  Moldovan: 'Moldova', Ukrainian: 'Ukraine', Belarusian: 'Belarus', Turkish: 'Turkey',
-  Greek: 'Greece', Icelandic: 'Iceland', Chinese: 'China', Japanese: 'Japan',
-  'South Korean': 'South Korea', Korean: 'South Korea', Thai: 'Thailand',
-  Filipino: 'Philippines', Singaporean: 'Singapore', Indian: 'India',
-  Indonesian: 'Indonesia', Kazakhstani: 'Kazakhstan', Kyrgyz: 'Kyrgyzstan',
-  Uzbek: 'Uzbekistan', Azerbaijani: 'Azerbaijan', Armenian: 'Armenia',
-  Iranian: 'Iran', Peruvian: 'Peru', Ecuadorian: 'Ecuador', Colombian: 'Colombia',
-  Venezuelan: 'Venezuela', Argentinian: 'Argentina', Chilean: 'Chile',
-  Bolivian: 'Bolivia', Paraguayan: 'Paraguay', Uruguayan: 'Uruguay',
-  Jamaican: 'Jamaica', Puerto: 'Puerto Rico', Nigerian: 'Nigeria',
-  'South African': 'South Africa', Cameroonian: 'Cameroon', Congolese: 'DR Congo',
-  Moroccan: 'Morocco', Egyptian: 'Egypt', Jordanian: 'Jordan', Bahraini: 'Bahrain',
-  Israeli: 'Israel', Iraqi: 'Iraq',
-}
-
-function parseAthleteCountry(html: string): string | undefined {
-  // UFC athlete pages list nationality as a labelled bio field.
-  // Pattern: "Nationality" label followed (within ~300 chars) by the value in a text element.
-  const m = html.match(/Nationality[\s\S]{0,300}?<div[^>]*class="[^"]*c-bio__text[^"]*"[^>]*>\s*([^<]+?)\s*</)
-  if (!m) return undefined
-  const raw = m[1].trim()
-  return DEMONYM_TO_COUNTRY[raw] ?? raw
-}
 
 // ─── Step 1: Parse ufc.com/rankings ──────────────────────────────────────────
 interface RankedFighter {
@@ -164,123 +92,6 @@ function parseRankingsPage(html: string, weightClassKey: string): RankedFighter[
     return fighters
   }
   return []
-}
-
-// Normalize name for fuzzy comparison: lowercase + strip diacritics + strip non-alpha
-function normName(s: string): string {
-  // Simple diacritic removal via decomposition
-  const map: Record<string, string> = {
-    à:'a',á:'a',â:'a',ã:'a',ä:'a',å:'a',
-    è:'e',é:'e',ê:'e',ë:'e',
-    ì:'i',í:'i',î:'i',ï:'i',
-    ò:'o',ó:'o',ô:'o',õ:'o',ö:'o',
-    ù:'u',ú:'u',û:'u',ü:'u',
-    ñ:'n',ç:'c',ý:'y',ÿ:'y',
-    ß:'ss',
-  }
-  return s
-    .toLowerCase()
-    .replace(/[^\u0000-\u007E]/g, (c) => map[c] ?? c)
-    .replace(/[^a-z0-9 ]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim()
-}
-
-// ─── Step 2: Search ufcstats.com for a fighter by name ───────────────────────
-interface UfcStatsSearchResult {
-  ufcStatsUrl: string
-  nickname: string
-  wins: number
-  losses: number
-  draws: number
-}
-
-async function searchUfcStats(name: string): Promise<UfcStatsSearchResult | null> {
-  const targetNorm = normName(name)
-  const lastNameNorm = normName(name.split(' ').slice(-1)[0])
-
-  // Try full name first, then last name only
-  const queries = [name, name.split(' ').slice(-1)[0]]
-
-  for (const query of queries) {
-    const url = `http://www.ufcstats.com/statistics/fighters/search?query=${encodeURIComponent(query)}`
-    let html: string
-    try {
-      const res = await fetch(url, { headers: { 'User-Agent': UA, Accept: 'text/html' } })
-      if (!res.ok) continue
-      html = await res.text()
-    } catch {
-      continue
-    }
-
-    const rows = html.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/g)
-    for (const rowMatch of rows) {
-      const row = rowMatch[1]
-      if (!row.includes('fighter-details')) continue
-
-      const cells: string[] = []
-      for (const m of row.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)) cells.push(m[1])
-      if (cells.length < 10) continue
-
-      const rowNorm = normName(`${strip(cells[0])} ${strip(cells[1])}`)
-
-      // Match on normalized full name or normalized last name
-      if (rowNorm !== targetNorm && !rowNorm.endsWith(lastNameNorm)) continue
-
-      const hrefMatch = cells[0].match(/href="([^"]+fighter-details[^"]+)"/)
-      if (!hrefMatch) continue
-
-      return {
-        ufcStatsUrl: hrefMatch[1],
-        nickname: strip(cells[2]),
-        wins: parseInt(strip(cells[7])) || 0,
-        losses: parseInt(strip(cells[8])) || 0,
-        draws: parseInt(strip(cells[9])) || 0,
-      }
-    }
-  }
-  return null
-}
-
-// ─── Step 3: Parse fighter detail page ───────────────────────────────────────
-interface FighterStats {
-  slpm: number; strikingAccuracy: number; sapm: number; strikingDefense: number
-  takedownAvg: number; takedownAccuracy: number; takedownDefense: number; submissionAvg: number
-}
-
-function parseDetailPage(html: string): { stats: FighterStats; nickname?: string; weight?: string } {
-  const items: string[] = []
-  for (const m of html.matchAll(/<li class="b-list__box-list-item[^"]*">([\s\S]*?)<\/li>/g)) {
-    const text = strip(m[1])
-    if (text) items.push(text)
-  }
-
-  function get(label: string) {
-    const item = items.find((i) => i.startsWith(label + ':'))
-    return item ? parseNum(item.slice(label.length + 1).trim()) : 0
-  }
-
-  function getString(label: string): string | undefined {
-    const item = items.find((i) => i.startsWith(label + ':'))
-    return item ? item.slice(label.length + 1).trim().replace(/\.$/, '') || undefined : undefined
-  }
-
-  const nickMatch = html.match(/<p class="b-content__Nickname"[^>]*>([\s\S]*?)<\/p>/)
-
-  return {
-    stats: {
-      slpm:             get('SLpM'),
-      strikingAccuracy: get('Str. Acc.'),
-      sapm:             get('SApM'),
-      strikingDefense:  get('Str. Def'),
-      takedownAvg:      get('TD Avg.'),
-      takedownAccuracy: get('TD Acc.'),
-      takedownDefense:  get('TD Def.'),
-      submissionAvg:    get('Sub. Avg.'),
-    },
-    nickname: nickMatch ? strip(nickMatch[1]) || undefined : undefined,
-    weight: getString('Weight'),
-  }
 }
 
 const STALE_MS = 24 * 60 * 60 * 1000
@@ -353,72 +164,23 @@ export const scrapeWeightClass = action({
       }
 
       // ── New fighter or stale data → full fetch: photo + ufcstats search + detail page
-      // Always fetch the athlete page to get the full-body image and nationality
-      let photoUrl: string | undefined
-      let country: string | undefined
-      try {
-        const res = await fetch(`https://www.ufc.com/athlete/${ranked.ufcSlug}`, {
-          headers: { 'User-Agent': UA, Accept: 'text/html' },
-        })
-        if (res.ok) {
-          const html = await res.text()
-          const fullBody = html.match(/src="(https?:\/\/ufc\.com\/images\/styles\/athlete_bio_full_body\/[^"]+)"/)
-          if (fullBody?.[1]) {
-            photoUrl = await downloadAndStorePhoto(ctx.storage, fullBody[1])
-          }
-          country = parseAthleteCountry(html)
-        }
-      } catch { /* keep going without photo or country */ }
-
-      let wins = 0, losses = 0, draws = 0
-      let nickname: string | undefined
-      let weight: string | undefined
-      let ufcStatsUrl = db?.ufcStatsUrl ?? `https://www.ufc.com/athlete/${ranked.ufcSlug}`
-      let stats: FighterStats = db?.stats ?? {
-        slpm: 0, strikingAccuracy: 0, sapm: 0, strikingDefense: 0,
-        takedownAvg: 0, takedownAccuracy: 0, takedownDefense: 0, submissionAvg: 0,
-      }
-
-      const searchResult = await searchUfcStats(ranked.name)
-      if (searchResult) {
-        ufcStatsUrl = searchResult.ufcStatsUrl
-        wins = searchResult.wins
-        losses = searchResult.losses
-        draws = searchResult.draws
-        nickname = searchResult.nickname || undefined
-
-        try {
-          const res = await fetch(searchResult.ufcStatsUrl, {
-            headers: { 'User-Agent': UA, Accept: 'text/html' },
-          })
-          if (res.ok) {
-            const parsed = parseDetailPage(await res.text())
-            stats = parsed.stats
-            if (parsed.nickname) nickname = parsed.nickname
-            if (parsed.weight) weight = parsed.weight
-          }
-        } catch (err) {
-          console.error(`Detail fetch failed for ${ranked.name}:`, err)
-        }
-      } else {
-        console.log(`ufcstats search miss: ${ranked.name}`)
-      }
+      const h = await hydrateFighter(ctx.storage, ranked.ufcSlug, ranked.name)
 
       if (isNew) {
         // Insert brand-new fighter
         await ctx.runMutation(api.fighters.upsertFighter, {
           name: ranked.name,
-          nickname,
+          nickname: h.nickname,
           weightClass,
           division,
           ranking: ranked.ranking,
-          record: { wins, losses, draws, noContests: 0 },
-          stats,
-          weight,
-          country,
-          photoUrl,
+          record: { wins: h.wins, losses: h.losses, draws: h.draws, noContests: 0 },
+          stats: h.stats,
+          weight: h.weight,
+          country: h.country,
+          photoUrl: h.photoUrl,
           ufcUrl: ranked.ufcSlug,
-          ufcStatsUrl,
+          ufcStatsUrl: h.ufcStatsUrl,
           lastSynced: now,
         })
       } else {
@@ -426,14 +188,14 @@ export const scrapeWeightClass = action({
         await ctx.runMutation(api.fighters.patchFighter, {
           ufcUrl: ranked.ufcSlug,
           ranking: ranked.ranking,
-          photoUrl: photoUrl ?? undefined,
-          nickname,
-          weight,
-          country,
+          photoUrl: h.photoUrl ?? undefined,
+          nickname: h.nickname,
+          weight: h.weight,
+          country: h.country,
           weightClass,
           division,
-          record: { wins, losses, draws, noContests: 0 },
-          stats,
+          record: { wins: h.wins, losses: h.losses, draws: h.draws, noContests: 0 },
+          stats: h.stats,
           lastSynced: now,
         })
       }
@@ -483,77 +245,6 @@ function slugToName(slug: string): string {
     .join(' ')
 }
 
-// Full-scrapes a fighter discovered on a fight card (not via rankings) and
-// inserts them with no ranking. Presence on a scheduled card is proof of
-// activity. Returns the new fighter's id, or null if the insert couldn't run.
-async function fullScrapeFighter(
-  ctx: ActionCtx,
-  slug: string,
-  weightClass: string,
-  division: 'mens' | 'womens',
-  displayName?: string
-): Promise<Id<'fighters'> | null> {
-  const name = displayName ?? slugToName(slug)
-  const now = Date.now()
-
-  let photoUrl: string | undefined
-  try {
-    const res = await fetch(`https://www.ufc.com/athlete/${slug}`, {
-      headers: { 'User-Agent': UA, Accept: 'text/html' },
-    })
-    if (res.ok) {
-      const html = await res.text()
-      const fullBody = html.match(/src="(https?:\/\/ufc\.com\/images\/styles\/athlete_bio_full_body\/[^"]+)"/)
-      if (fullBody?.[1]) photoUrl = await downloadAndStorePhoto(ctx.storage, fullBody[1])
-    }
-  } catch { /* keep going without photo */ }
-
-  let wins = 0, losses = 0, draws = 0
-  let nickname: string | undefined
-  let weight: string | undefined
-  let ufcStatsUrl = `https://www.ufc.com/athlete/${slug}`
-  let stats: FighterStats = {
-    slpm: 0, strikingAccuracy: 0, sapm: 0, strikingDefense: 0,
-    takedownAvg: 0, takedownAccuracy: 0, takedownDefense: 0, submissionAvg: 0,
-  }
-
-  const searchResult = await searchUfcStats(name)
-  if (searchResult) {
-    ufcStatsUrl = searchResult.ufcStatsUrl
-    wins = searchResult.wins
-    losses = searchResult.losses
-    draws = searchResult.draws
-    nickname = searchResult.nickname || undefined
-    try {
-      const res = await fetch(searchResult.ufcStatsUrl, {
-        headers: { 'User-Agent': UA, Accept: 'text/html' },
-      })
-      if (res.ok) {
-        const parsed = parseDetailPage(await res.text())
-        stats = parsed.stats
-        if (parsed.nickname) nickname = parsed.nickname
-        if (parsed.weight) weight = parsed.weight
-      }
-    } catch (err) {
-      console.error(`Detail fetch failed for ${name}:`, err)
-    }
-  }
-
-  return await ctx.runMutation(api.fighters.upsertFighter, {
-    name,
-    nickname,
-    weightClass,
-    division,
-    record: { wins, losses, draws, noContests: 0 },
-    stats,
-    weight,
-    photoUrl,
-    ufcUrl: slug,
-    ufcStatsUrl,
-    lastSynced: now,
-  })
-}
-
 // Scrapes all upcoming UFC events and their full fight cards. Cron-triggered
 // (daily) — see convex/crons.ts. Idempotent: events are upserted by slug and
 // each event's bouts are fully replaced on every run.
@@ -595,6 +286,9 @@ export const scrapeEvents = action({
       })
       if (!cardHtml) continue
 
+      // Resolves a card slug to a fighter id, full-scraping (via hydrateFighter)
+      // and inserting any fighter not yet in the DB. Event-discovered fighters
+      // are unranked — presence on a scheduled card is proof of activity.
       const resolve = async (
         slug: string,
         weightClass: string,
@@ -605,9 +299,26 @@ export const scrapeEvents = action({
         if (cached) return cached
         let id: Id<'fighters'> | null = null
         try {
-          id = await fullScrapeFighter(ctx, slug, weightClass, division, displayName)
+          // The card's rendered name (diacritics intact) is preferred; slugToName
+          // is the fallback. searchUfcStats normalizes either way.
+          const name = displayName ?? slugToName(slug)
+          const h = await hydrateFighter(ctx.storage, slug, name)
+          id = await ctx.runMutation(api.fighters.upsertFighter, {
+            name,
+            nickname: h.nickname,
+            weightClass,
+            division,
+            record: { wins: h.wins, losses: h.losses, draws: h.draws, noContests: 0 },
+            stats: h.stats,
+            weight: h.weight,
+            country: h.country,
+            photoUrl: h.photoUrl,
+            ufcUrl: slug,
+            ufcStatsUrl: h.ufcStatsUrl,
+            lastSynced: now,
+          })
         } catch (err) {
-          console.error(`fullScrapeFighter failed for ${slug}:`, err)
+          console.error(`hydrateFighter failed for ${slug}:`, err)
         }
         if (id) {
           idBySlug.set(slug, id)

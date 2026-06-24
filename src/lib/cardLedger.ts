@@ -82,13 +82,10 @@ export function boutWeightClassLabel(weightClass: string, division: Division): s
  * country of record, or null when there is no country (TBA / none on file) or
  * no mapping for it. Keyed on the full English country name UFC.com uses
  * (e.g. "United States", "Georgia"). Dependency-free — the emoji is derived
- * from the ISO 3166-1 alpha-2 code's two Regional Indicator code points, with
- * a small carve-out for the UK home nations (subdivision tag flags).
+ * from the ISO 3166-1 alpha-2 code's two Regional Indicator code points.
  */
 export function countryFlag(country: string | null): string | null {
   if (!country) return null
-  const subdivision = SUBDIVISION_FLAGS[country]
-  if (subdivision) return subdivision
   const code = COUNTRY_ISO[country]
   if (!code) return null
   // 'A' (0x41) → Regional Indicator Symbol Letter A (0x1F1E6); offset 0x1F1A5.
@@ -172,14 +169,6 @@ const COUNTRY_ISO: Record<string, string> = {
   Cuba: 'CU',
   'Dominican Republic': 'DO',
   Jamaica: 'JM',
-}
-
-// UK home nations carry their own subdivision tag-sequence flags rather than
-// the Union Jack — common enough on a UFC card to be worth the carve-out.
-const SUBDIVISION_FLAGS: Record<string, string> = {
-  England: '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
-  Scotland: '🏴󠁧󠁢󠁳󠁣󠁴󠁿',
-  Wales: '🏴󠁧󠁢󠁷󠁬󠁳󠁿',
 }
 
 // Derived by hand from src/lib/weightClasses.ts slugs — kept local so this
