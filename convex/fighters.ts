@@ -3,6 +3,7 @@ import { mutation, query } from './_generated/server'
 import type { MutationCtx } from './_generated/server'
 import type { Id } from './_generated/dataModel'
 import { shouldPruneFighter } from './lib/fighterPrune'
+import { findNextEvent } from './events'
 
 export const getByWeightClass = query({
   args: {
@@ -270,11 +271,7 @@ export const getFeaturedFighter = query({
   handler: async (ctx) => {
     // Next event's main-event fighter takes priority when they have a photo.
     const now = Date.now()
-    const nextEvent = await ctx.db
-      .query('events')
-      .withIndex('by_date', (q) => q.gt('date', now))
-      .order('asc')
-      .first()
+    const nextEvent = await findNextEvent(ctx, now)
     if (nextEvent) {
       const mainBout = await ctx.db
         .query('bouts')

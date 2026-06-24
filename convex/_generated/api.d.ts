@@ -11,8 +11,11 @@
 import type * as crons from "../crons.js";
 import type * as events from "../events.js";
 import type * as fighters from "../fighters.js";
+import type * as lib_country from "../lib/country.js";
 import type * as lib_eventParse from "../lib/eventParse.js";
+import type * as lib_fighterHydrate from "../lib/fighterHydrate.js";
 import type * as lib_fighterPrune from "../lib/fighterPrune.js";
+import type * as lib_htmlParse from "../lib/htmlParse.js";
 import type * as lib_postEventSync from "../lib/postEventSync.js";
 import type * as scrape from "../scrape.js";
 import type * as videoGenerate from "../videoGenerate.js";
@@ -27,8 +30,11 @@ declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   events: typeof events;
   fighters: typeof fighters;
+  "lib/country": typeof lib_country;
   "lib/eventParse": typeof lib_eventParse;
+  "lib/fighterHydrate": typeof lib_fighterHydrate;
   "lib/fighterPrune": typeof lib_fighterPrune;
+  "lib/htmlParse": typeof lib_htmlParse;
   "lib/postEventSync": typeof lib_postEventSync;
   scrape: typeof scrape;
   videoGenerate: typeof videoGenerate;
