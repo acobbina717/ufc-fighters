@@ -12,7 +12,7 @@ import {
 } from '@mantine/core'
 import { useReducedMotion } from '@mantine/hooks'
 import { Home, Menu, Moon, Sun, X } from 'lucide-react'
-import { gsap, useGSAP } from '#/lib/gsap'
+import { gsap, ScrollTrigger, useGSAP } from '#/lib/gsap'
 import classes from './FloatingDock.module.css'
 
 // Per-session memory of the dock's open state (#44). Collapsed is the default;
@@ -57,6 +57,44 @@ export default function FloatingDock() {
     if (!next) setMounted(true)
     setCollapsed(next)
   }
+
+  // Recede choreography (issue #27): watch the hero's pinned scroll zone and
+  // auto-collapse the dock out of view so it doesn't occlude the cinematic
+  // Face-off animation. The pin zone mirrors HeroChapter's ScrollTrigger
+  // (start: 'top top', end: '+=60%'). A CSS transition handles the visual — no
+  // GSAP tween needed. Skipped on mobile (hero pin is desktop-only) and under
+  // reduced motion. Operates independently of the user's expand/collapse toggle.
+  useGSAP(
+    () => {
+      if (reduceMotion) return
+
+      // matchMedia mirrors HeroChapter's desktop breakpoint (sm = 48em).
+      const mm = gsap.matchMedia()
+      mm.add('(min-width: 48em)', () => {
+        const hero = document.querySelector('[data-hero-pin]')
+        if (!hero || !navRef.current) return
+
+        const nav = navRef.current
+        const st = ScrollTrigger.create({
+          trigger: hero,
+          start: 'top top',
+          end: '+=60%',
+          onEnter: () => { nav.dataset.receded = 'true' },
+          onLeave: () => { delete nav.dataset.receded },
+          onEnterBack: () => { nav.dataset.receded = 'true' },
+          onLeaveBack: () => { delete nav.dataset.receded },
+        })
+
+        return () => {
+          st.kill()
+          if (navRef.current) delete navRef.current.dataset.receded
+        }
+      })
+
+      return () => mm.revert()
+    },
+    { dependencies: [reduceMotion] },
+  )
 
   // GSAP drives only the link stagger (the pill's geometry follows its content).
   // Expand: links slide in left-to-right. Collapse: reverse stagger, then the

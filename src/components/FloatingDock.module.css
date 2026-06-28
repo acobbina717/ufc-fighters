@@ -17,7 +17,18 @@
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid light-dark(rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.12));
   box-shadow: var(--mantine-shadow-md);
-  transition: background-color 0.2s ease, border-color 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease,
+    opacity 0.4s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Recede state (issue #27): dock slides up and fades out during the hero's
+   pinned cinematic scroll zone so it does not occlude the Face-off animation.
+   Pointer events are disabled so the invisible dock is not accidentally clicked.
+   The CSS transition on .dock handles the smooth enter/exit. */
+.dock[data-receded] {
+  opacity: 0;
+  transform: translateY(calc(-1 * var(--mantine-spacing-xl)));
+  pointer-events: none;
 }
 
 .link {
