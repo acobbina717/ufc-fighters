@@ -4,6 +4,8 @@
 // including the main event (boutOrder 1) the Hero also features. Independent of
 // rendering so it is unit-testable without a DOM or Convex.
 
+import { ALL_DIVISIONS } from './weightClasses'
+
 export type CardTier = 'main' | 'prelim' | 'early_prelim'
 export type Division = 'mens' | 'womens'
 
@@ -171,20 +173,16 @@ const COUNTRY_ISO: Record<string, string> = {
   Jamaica: 'JM',
 }
 
-// Derived by hand from src/lib/weightClasses.ts slugs — kept local so this
-// module stays dependency-free and the women's prefix/men's bare-label rule
-// is explicit.
-const DIVISION_LABELS: Record<string, string> = {
-  'mens-flyweight': 'FLYWEIGHT',
-  'mens-bantamweight': 'BANTAMWEIGHT',
-  'mens-featherweight': 'FEATHERWEIGHT',
-  'mens-lightweight': 'LIGHTWEIGHT',
-  'mens-welterweight': 'WELTERWEIGHT',
-  'mens-middleweight': 'MIDDLEWEIGHT',
-  'mens-lightheavyweight': 'LIGHT HEAVYWEIGHT',
-  'mens-heavyweight': 'HEAVYWEIGHT',
-  'womens-strawweight': "WOMEN'S STRAWWEIGHT",
-  'womens-flyweight': "WOMEN'S FLYWEIGHT",
-  'womens-bantamweight': "WOMEN'S BANTAMWEIGHT",
-  'womens-featherweight': "WOMEN'S FEATHERWEIGHT",
-}
+// Fight-poster division labels, derived from the canonical division registry
+// (#70) so the registry stays the single source of truth. Men's read bare
+// (uppercased, prefix stripped — "LIGHT HEAVYWEIGHT"); women's keep their
+// "WOMEN'S " prefix. Women's Featherweight isn't in the registry, so it falls
+// through to boutWeightClassLabel's bare-slug fallback.
+export const DIVISION_LABELS: Record<string, string> = Object.fromEntries(
+  ALL_DIVISIONS.map((d) => [
+    d.key,
+    d.division === 'womens'
+      ? d.label.replace(/^Women's /, "WOMEN'S ").toUpperCase()
+      : d.label.replace(/^Men's /, '').toUpperCase(),
+  ]),
+)
