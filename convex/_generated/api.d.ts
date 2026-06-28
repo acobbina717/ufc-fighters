@@ -13,6 +13,7 @@ import type * as events from "../events.js";
 import type * as fighters from "../fighters.js";
 import type * as lib_country from "../lib/country.js";
 import type * as lib_eventParse from "../lib/eventParse.js";
+import type * as lib_fighterDiff from "../lib/fighterDiff.js";
 import type * as lib_fighterHydrate from "../lib/fighterHydrate.js";
 import type * as lib_fighterPrune from "../lib/fighterPrune.js";
 import type * as lib_htmlParse from "../lib/htmlParse.js";
@@ -32,6 +33,7 @@ declare const fullApi: ApiFromModules<{
   fighters: typeof fighters;
   "lib/country": typeof lib_country;
   "lib/eventParse": typeof lib_eventParse;
+  "lib/fighterDiff": typeof lib_fighterDiff;
   "lib/fighterHydrate": typeof lib_fighterHydrate;
   "lib/fighterPrune": typeof lib_fighterPrune;
   "lib/htmlParse": typeof lib_htmlParse;
