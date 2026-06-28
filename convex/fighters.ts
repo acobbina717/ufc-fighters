@@ -3,6 +3,7 @@ import { mutation, query } from './_generated/server'
 import type { MutationCtx } from './_generated/server'
 import type { Id } from './_generated/dataModel'
 import { shouldPruneFighter } from './lib/fighterPrune'
+import { diffFighter } from './lib/fighterDiff'
 import { findNextEvent } from './events'
 
 export const getByWeightClass = query({
@@ -128,38 +129,9 @@ export const patchFighter = mutation({
       .first()
     if (!existing) return
 
-    // Build patch from only the fields that differ from current values
-    const patch: Record<string, unknown> = {}
-
-    if (fields.ranking !== undefined && fields.ranking !== existing.ranking)
-      patch.ranking = fields.ranking
-    if (fields.photoUrl && fields.photoUrl !== existing.photoUrl)
-      patch.photoUrl = fields.photoUrl
-    if (fields.nickname !== undefined && fields.nickname !== existing.nickname)
-      patch.nickname = fields.nickname
-    if (fields.weightClass && fields.weightClass !== existing.weightClass)
-      patch.weightClass = fields.weightClass
-    if (fields.division && fields.division !== existing.division)
-      patch.division = fields.division
-    if (fields.record) {
-      const r = existing.record
-      const n = fields.record
-      if (n.wins !== r.wins || n.losses !== r.losses || n.draws !== r.draws || n.noContests !== r.noContests)
-        patch.record = fields.record
-    }
-    if (fields.stats) {
-      const s = existing.stats
-      const n = fields.stats
-      const changed = (Object.keys(n) as Array<keyof typeof n>).some((k) => n[k] !== s[k])
-      if (changed) patch.stats = fields.stats
-    }
-    if (fields.weight !== undefined && fields.weight !== existing.weight)
-      patch.weight = fields.weight
-    if (fields.country !== undefined && fields.country !== existing.country)
-      patch.country = fields.country
-    if (fields.lastSynced !== undefined)
-      patch.lastSynced = fields.lastSynced
-
+    // Diff is pure logic (see lib/fighterDiff) so it can be unit-tested against
+    // plain objects; this handler just owns the DB read and the conditional write.
+    const patch = diffFighter(existing, fields)
     if (Object.keys(patch).length > 0) await ctx.db.patch(existing._id, patch)
   },
 })
