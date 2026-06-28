@@ -171,6 +171,10 @@ const COUNTRY_ISO: Record<string, string> = {
   Cuba: 'CU',
   'Dominican Republic': 'DO',
   Jamaica: 'JM',
+  Afghanistan: 'AF',
+  Montenegro: 'ME',
+  Romania: 'RO',
+  'Solomon Islands': 'SB',
 }
 
 // Fight-poster division labels, derived from the canonical division registry
