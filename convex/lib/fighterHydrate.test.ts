@@ -4,16 +4,17 @@ import { hydrateFighter, type StorageLike } from './fighterHydrate'
 // ─── Synthetic HTML builders ──────────────────────────────────────────────────
 // Minimal markup that satisfies the parsers' regexes — not real UFC pages.
 
-// Athlete page with an optional full-body image and an optional Nationality block.
-function athletePage(opts: { fullBody?: string; nationality?: string } = {}): string {
+// Athlete page with an optional full-body image and an optional Place of Birth
+// block ("City, Country" — the field UFC now uses instead of Nationality).
+function athletePage(opts: { fullBody?: string; placeOfBirth?: string } = {}): string {
   const img = opts.fullBody
     ? `<img src="${opts.fullBody}" />`
     : ''
-  const nat = opts.nationality
-    ? `<div class="c-bio__field"><div class="c-bio__label">Nationality</div>` +
-      `<div class="c-bio__text">${opts.nationality}</div></div>`
+  const pob = opts.placeOfBirth
+    ? `<div class="c-bio__field"><div class="c-bio__label">Place of Birth</div>` +
+      `<div class="c-bio__text">${opts.placeOfBirth}</div></div>`
     : ''
-  return `<html><body>${img}${nat}</body></html>`
+  return `<html><body>${img}${pob}</body></html>`
 }
 
 // One ufcstats search result row. searchUfcStats needs ≥10 <td> cells with
@@ -132,15 +133,15 @@ describe('hydrateFighter', () => {
     expect(h.photoUrl).toBeUndefined()
   })
 
-  it('extracts and normalizes country from the Nationality block', async () => {
-    stubFetch({ athlete: athletePage({ nationality: 'Russian' }) })
+  it('extracts the country from the Place of Birth block', async () => {
+    stubFetch({ athlete: athletePage({ placeOfBirth: 'Makhachkala, Dagestan, Russia' }) })
 
     const h = await hydrateFighter(mockStorage, 'khabib-nurmagomedov', 'Khabib Nurmagomedov')
 
     expect(h.country).toBe('Russia')
   })
 
-  it('leaves country undefined when no Nationality block is present', async () => {
+  it('leaves country undefined when no Place of Birth block is present', async () => {
     stubFetch({ athlete: athletePage() })
 
     const h = await hydrateFighter(mockStorage, 'unknown', 'Unknown Fighter')
@@ -150,7 +151,7 @@ describe('hydrateFighter', () => {
 
   it('returns zeros and falls back to the athlete URL on a ufcstats miss', async () => {
     stubFetch({
-      athlete: athletePage({ nationality: 'American' }),
+      athlete: athletePage({ placeOfBirth: 'Houston, United States' }),
       search: emptySearchPage(),
     })
 
@@ -170,7 +171,7 @@ describe('hydrateFighter', () => {
 
   it('populates record and stats on a ufcstats hit', async () => {
     stubFetch({
-      athlete: athletePage({ nationality: 'Russian' }),
+      athlete: athletePage({ placeOfBirth: 'Makhachkala, Russia' }),
       search: searchPage({
         detailsUrl: DETAILS_URL,
         given: 'Khabib',
