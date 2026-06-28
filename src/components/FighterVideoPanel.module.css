@@ -110,11 +110,14 @@
 .name {
   font-family: var(--mantine-font-family-headings);
   font-weight: 800;
-  font-size: clamp(1.4rem, 2.5vw, 2.4rem);
+  font-size: clamp(1rem, 1.8vw, 1.8rem);
   line-height: 0.95;
   text-transform: uppercase;
   color: light-dark(var(--mantine-color-black), var(--mantine-color-white));
   letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .record {

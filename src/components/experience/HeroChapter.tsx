@@ -178,12 +178,20 @@ export default function HeroChapter({ initialData }: HeroChapterProps) {
       <div ref={facestageRef} className={classes.facestage}>
         {isFaceoff ? (
           <>
-            <CornerView fighter={fighterA} side="left" showName />
-            {/* Central VS — stable Flip target for #62; no Flip built here. */}
-            <div ref={vsRef} className={classes.vs} aria-hidden="true">
-              VS
+            <CornerView fighter={fighterA} side="left" showName={false} />
+            {/* Stacked centre: Fighter A name → VS → Fighter B name */}
+            <div ref={vsRef} className={classes.vsStack} aria-hidden="true">
+              <span className={classes.cornerName}>
+                {isChampion(fighterA) && <span className={classes.champBadge}>C</span>}
+                {cornerName(fighterA)}
+              </span>
+              <span className={classes.vs}>VS</span>
+              <span className={classes.cornerName}>
+                {isChampion(fighterB) && <span className={classes.champBadge}>C</span>}
+                {cornerName(fighterB)}
+              </span>
             </div>
-            <CornerView fighter={fighterB} side="right" showName />
+            <CornerView fighter={fighterB} side="right" showName={false} />
           </>
         ) : (
           // Single-fighter fallback: one corner holds the frame, VS omitted.

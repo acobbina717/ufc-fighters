@@ -216,11 +216,12 @@
 .fighter {
   font-family: var(--mantine-font-family-headings);
   font-weight: 800;
-  font-size: clamp(28px, 4vw, 64px);
+  font-size: clamp(20px, 2.8vw, 48px);
   line-height: 1.05;
   letter-spacing: 0.01em;
   color: light-dark(rgba(0, 0, 0, 0.88), rgba(255, 255, 255, 0.88));
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 /* The vs mark carries the brand accent — same job as the Hero face-off's red VS. */
@@ -239,11 +240,12 @@
 .tba {
   font-family: var(--mantine-font-family-headings);
   font-weight: 800;
-  font-size: clamp(28px, 4vw, 64px);
+  font-size: clamp(20px, 2.8vw, 48px);
   line-height: 1.05;
   letter-spacing: 0.06em;
   color: light-dark(rgba(0, 0, 0, 0.55), rgba(255, 255, 255, 0.55));
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 /* Below md the horizontal card layout collapses to a 3-column grid: photos

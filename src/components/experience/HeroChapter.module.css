@@ -12,6 +12,9 @@
   background: light-dark(#fff, #000);
   overflow: hidden;
   transition: background 0.3s ease;
+  /* Scope the bottom-fade higher so full-body photos don't dissolve at the feet */
+  --seating-grade-fade-start: 91%;
+  --seating-grade-fade-end: 100%;
 }
 
 /* ── Face-off stage ───────────────────────────────────────────────────────── */
@@ -25,7 +28,7 @@
 .corner {
   position: absolute;
   bottom: 0;
-  height: 90%;
+  height: 96%;
   width: 46%;
 }
 
@@ -47,13 +50,13 @@
 
 /* Right corner's photo bottom-anchors to the right; left mirrors it. */
 .cornerRight .photoSlot {
-  -webkit-mask-image: linear-gradient(to left, #000 0%, #000 62%, transparent 100%);
-  mask-image: linear-gradient(to left, #000 0%, #000 62%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to left, #000 0%, #000 72%, transparent 100%);
+  mask-image: linear-gradient(to left, #000 0%, #000 72%, transparent 100%);
 }
 
 .cornerLeft .photoSlot {
-  -webkit-mask-image: linear-gradient(to right, #000 0%, #000 62%, transparent 100%);
-  mask-image: linear-gradient(to right, #000 0%, #000 62%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, #000 0%, #000 72%, transparent 100%);
+  mask-image: linear-gradient(to right, #000 0%, #000 72%, transparent 100%);
 }
 
 /* Shared Seating Grade (issue #59): contrast/saturation curve, object-fit
@@ -62,17 +65,20 @@
   composes: photo from './seatingGrade.module.css';
   width: 100%;
   height: 100%;
-  /* Anchor to the TOP so the headliners' faces read in the Face-off; the
-     Seating Grade bottom-fade then dissolves the legs into the base. */
-  object-position: top center;
 }
 
-.cornerRight .photo {
-  object-position: top right;
+/* Two-class selector beats seatingGrade's single-class object-fit:cover */
+.photoSlot .photo {
+  object-fit: contain;
+  object-position: bottom center;
 }
 
-.cornerLeft .photo {
-  object-position: top left;
+.cornerRight .photoSlot .photo {
+  object-position: bottom right;
+}
+
+.cornerLeft .photoSlot .photo {
+  object-position: bottom left;
 }
 
 /* Neutral silhouette fallback in the identical slot when a photo is missing. */
@@ -82,34 +88,30 @@
   height: 100%;
 }
 
-/* ── Mirrored corner captions ─────────────────────────────────────────────── */
-.caption {
+/* ── Stacked centre text: [Name] / VS / [Name] ───────────────────────────── */
+.vsStack {
   position: absolute;
-  bottom: clamp(64px, 12vh, 120px);
-  z-index: 15;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 18;
   display: flex;
-  align-items: baseline;
-  gap: 10px;
-}
-
-/* Left name right-aligns toward the centre; right name left-aligns. */
-.cornerLeft .caption {
-  left: clamp(24px, 5vw, 72px);
-  flex-direction: row-reverse;
-}
-
-.cornerRight .caption {
-  right: clamp(24px, 5vw, 72px);
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(4px, 1vh, 12px);
+  pointer-events: none;
+  text-align: center;
 }
 
 .cornerName {
   font-family: var(--mantine-font-family-headings);
   font-weight: 800;
-  font-size: clamp(28px, 5vw, 64px);
+  font-size: clamp(20px, 3.5vw, 48px);
   line-height: 0.92;
   letter-spacing: 0.02em;
   color: light-dark(rgba(0, 0, 0, 0.92), rgba(255, 255, 255, 0.95));
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 /* gold-5 champion "C" — titleholders only (ADR 0011 §7). */
@@ -130,22 +132,16 @@
   align-self: center;
 }
 
-/* ── Central VS — red matchup mark; stable Flip target for #62 ────────────── */
+/* ── VS mark — red accent inside the vsStack column ──────────────────────── */
 .vs {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 18;
   font-family: var(--mantine-font-family-headings);
   font-weight: 800;
-  font-size: clamp(52px, 10vw, 140px);
+  font-size: clamp(32px, 6vw, 80px);
   line-height: 1;
   letter-spacing: 0.04em;
   color: var(--mantine-color-ufcRed-6);
   text-transform: uppercase;
   user-select: none;
-  pointer-events: none;
 }
 
 /* ── Slimmed Press Pass — single centred TOP strip (next-event indicator) ──── */
@@ -257,16 +253,16 @@
   }
 
   .corner {
-    width: 56%;
+    width: 52%;
     height: 78%;
   }
 
-  .caption {
-    bottom: clamp(40px, 9vh, 80px);
+  .cornerName {
+    font-size: clamp(16px, 5vw, 28px);
   }
 
-  .cornerName {
-    font-size: clamp(24px, 9vw, 44px);
+  .vs {
+    font-size: clamp(24px, 8vw, 48px);
   }
 
   .vs {
