@@ -67,7 +67,7 @@ export default function DivisionPanel({
           duration: 0.7,
           ease: "power3.out",
           onComplete: () => {
-            gsap.set(split.chars, { clearProps: "all" });
+            gsap.set(split.chars, { clearProps: "transform" });
           },
         });
 
@@ -80,7 +80,7 @@ export default function DivisionPanel({
               stagger: 0.035,
               duration: 0.4,
               ease: "power2.out",
-              clearProps: "all",
+              clearProps: "opacity,transform",
             },
             "-=0.3",
           );

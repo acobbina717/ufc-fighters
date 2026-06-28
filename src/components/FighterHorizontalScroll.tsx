@@ -44,7 +44,7 @@ export default function FighterHorizontalScroll({ fighters, weightClassKey }: Fi
         stagger: 0.06,
         duration: 0.55,
         ease: 'power2.out',
-        clearProps: 'all',
+        clearProps: 'opacity,transform',
       })
 
       if (stRef.current) {
