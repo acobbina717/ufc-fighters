@@ -1,7 +1,0 @@
-.page {
-  height: calc(100vh - 56px); /* full height minus header */
-  display: flex;
-  flex-direction: column;
-  background: light-dark(var(--mantine-color-white), var(--mantine-color-black));
-  overflow: hidden;
-}
