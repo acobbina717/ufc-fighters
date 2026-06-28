@@ -9,24 +9,18 @@ import {
 } from './lib/postEventSync'
 import { strip } from './lib/htmlParse'
 import { UA, downloadAndStorePhoto, hydrateFighter } from './lib/fighterHydrate'
+import { ALL_DIVISIONS } from '../src/lib/weightClasses'
 
-// Maps our division keys to the section title on ufc.com/rankings
-const RANKINGS_SECTION_TITLE: Record<string, { title: string; division: 'mens' | 'womens' }> = {
-  'mens-flyweight':        { title: 'Flyweight',                   division: 'mens' },
-  'mens-bantamweight':     { title: 'Bantamweight',                division: 'mens' },
-  'mens-featherweight':    { title: 'Featherweight',               division: 'mens' },
-  'mens-lightweight':      { title: 'Lightweight',                 division: 'mens' },
-  'mens-welterweight':     { title: 'Welterweight',                division: 'mens' },
-  'mens-middleweight':     { title: 'Middleweight',                division: 'mens' },
-  'mens-lightheavyweight': { title: 'Light Heavyweight',           division: 'mens' },
-  'mens-heavyweight':      { title: 'Heavyweight',                 division: 'mens' },
-  'womens-strawweight':    { title: "Women&#039;s Strawweight",    division: 'womens' },
-  'womens-flyweight':      { title: "Women&#039;s Flyweight",      division: 'womens' },
-  'womens-bantamweight':   { title: "Women&#039;s Bantamweight",   division: 'womens' },
-  // Women's Featherweight is intentionally omitted: the UFC has no active ranked
-  // division for it, so it would only ever scrape empty. A one-off women's FW
-  // bout still renders via its cardLedger label. See ADR 0010.
-}
+// Maps our division keys to the section title on ufc.com/rankings, derived from
+// the canonical division registry (#70). Every ranked division carries its exact
+// HTML-entity-encoded rankingsTitle; Women's Featherweight isn't in the registry,
+// so it's absent here and is never scraped. See ADR 0010.
+export const RANKINGS_SECTION_TITLE: Record<
+  string,
+  { title: string; division: 'mens' | 'womens' }
+> = Object.fromEntries(
+  ALL_DIVISIONS.map((d) => [d.key, { title: d.rankingsTitle, division: d.division }]),
+)
 
 // Every weight class with an active rankings section — the backfill set for a
 // cold-start / full reseed. Derived from RANKINGS_SECTION_TITLE so empty
