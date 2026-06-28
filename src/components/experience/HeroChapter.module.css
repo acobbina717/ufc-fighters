@@ -40,6 +40,26 @@
   right: 0;
 }
 
+/* Light-mode shadow veils — directional outer-edge shadows lifting each
+   fighter off the white canvas. opacity collapses to 0 in dark mode. */
+.corner::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  opacity: light-dark(1, 0);
+  transition: opacity 0.3s ease;
+}
+
+.cornerLeft::after {
+  background: linear-gradient(to right, rgba(0,0,0,0.18) 0%, rgba(0,0,0,0.06) 30%, transparent 60%);
+}
+
+.cornerRight::after {
+  background: linear-gradient(to left, rgba(0,0,0,0.18) 0%, rgba(0,0,0,0.06) 30%, transparent 60%);
+}
+
 /* Photo slot — owns geometry; the Seating Grade (.photo) owns the treatment.
    A second, side-directed mask fades the photo's INNER edge toward the centre
    so the two headliners dissolve into the VS rather than colliding. */
@@ -114,6 +134,10 @@
   white-space: nowrap;
 }
 
+[data-mantine-color-scheme='light'] .cornerName {
+  text-shadow: 0 0 20px rgba(255,255,255,0.95), 0 1px 4px rgba(0,0,0,0.12);
+}
+
 /* gold-5 champion "C" — titleholders only (ADR 0011 §7). */
 .champBadge {
   display: inline-flex;
@@ -144,6 +168,10 @@
   user-select: none;
 }
 
+[data-mantine-color-scheme='light'] .vs {
+  text-shadow: 0 0 32px rgba(255,255,255,1), 0 2px 16px rgba(0,0,0,0.22);
+}
+
 /* ── Slimmed Press Pass — single centred TOP strip (next-event indicator) ──── */
 .pressPass {
   position: absolute;
@@ -160,6 +188,16 @@
   gap: 14px;
   flex-wrap: wrap;
   justify-content: center;
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+[data-mantine-color-scheme='light'] .pressPassInfo {
+  background: rgba(255,255,255,0.72);
+  backdrop-filter: blur(10px) saturate(1.6);
+  -webkit-backdrop-filter: blur(10px) saturate(1.6);
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 999px;
+  padding: 6px 18px;
 }
 
 .pressPassLabel {
@@ -264,8 +302,119 @@
   .vs {
     font-size: clamp(24px, 8vw, 48px);
   }
+}
 
-  .vs {
-    font-size: clamp(40px, 16vw, 84px);
+/* ── Motion-only slash wipe (#34, The Parting) ───────────────────────────── */
+.slashWipe {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 3px;
+  transform: scaleX(0);
+  transform-origin: left center;
+  background: var(--mantine-color-ufcRed-6);
+  box-shadow: 0 0 12px rgba(210, 10, 10, 0.7);
+  z-index: 30;
+  pointer-events: none;
+}
+
+/* ── Mobile / reduced-motion stacked layout (#35) ───────────────────────── */
+.heroStacked {
+  height: auto;
+  overflow: visible;
+}
+
+.facestageStacked {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  height: auto;
+}
+
+.mobileAct2 {
+  padding: var(--mantine-spacing-xl) var(--mantine-spacing-md);
+  background: light-dark(#fff, #000);
+}
+
+.act2Eyebrow {
+  font-family: var(--mantine-font-family-headings);
+  font-weight: 800;
+  font-size: 11px;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: var(--mantine-color-ufcRed-6);
+  margin-bottom: var(--mantine-spacing-md);
+}
+
+.act2Columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--mantine-spacing-lg);
+}
+
+.act2Group {}
+
+.act2GroupLabel {
+  font-family: var(--mantine-font-family-headings);
+  font-weight: 800;
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: light-dark(rgba(0,0,0,0.4), rgba(255,255,255,0.4));
+  margin-bottom: var(--mantine-spacing-xs);
+}
+
+.act2List {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.act2Link {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 0;
+  text-decoration: none;
+  border-bottom: 1px solid light-dark(rgba(0,0,0,0.06), rgba(255,255,255,0.06));
+}
+
+.act2Abbr {
+  font-family: var(--mantine-font-family-headings);
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--mantine-color-ufcRed-6);
+  min-width: 32px;
+  text-transform: uppercase;
+}
+
+.act2Label {
+  font-family: var(--mantine-font-family-headings);
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+  color: light-dark(rgba(0,0,0,0.82), rgba(255,255,255,0.82));
+  flex: 1;
+}
+
+.act2Weight {
+  font-size: 11px;
+  color: light-dark(rgba(0,0,0,0.4), rgba(255,255,255,0.4));
+  white-space: nowrap;
+}
+
+.act2Divider {
+  height: 1px;
+  background: light-dark(rgba(0,0,0,0.08), rgba(255,255,255,0.08));
+  margin-top: var(--mantine-spacing-xl);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scrollLine,
+  .pressPassDot {
+    animation: none;
   }
 }

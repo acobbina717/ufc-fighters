@@ -23,8 +23,13 @@
 :root {
   /* Common contrast/saturation curve. Tune the whole site's photographic look
      from this one declaration. Slight contrast + a touch of saturation pulls
-     flat UFC PNGs toward a consistent, punchy grade. */
-  --seating-grade-filter: contrast(1.06) saturate(1.08) brightness(0.99);
+     flat UFC PNGs toward a consistent, punchy grade.
+     Light base: stronger grade — white canvas strips depth that a dark bg
+     provides for free. Dark base: original tuned values. */
+  --seating-grade-filter: light-dark(
+    contrast(1.14) saturate(1.28) brightness(0.94),
+    contrast(1.06) saturate(1.08) brightness(0.99)
+  );
 
   /* Bottom-fade: where the photo starts dissolving (opaque above, transparent
      at the base edge). A mask alpha gradient — scheme-independent by

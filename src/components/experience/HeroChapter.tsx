@@ -1,39 +1,39 @@
 // Chapter 01 — Hero. The "Face-off" poster (issue #60, ADR 0012).
 //
 // Two headliners of the next Event, bottom-anchored in opposite corners with
-// mirrored masks fading toward the centre, a central red VS between them, a
-// gold champion "C" badge beside any titleholder's name, the next-event Press
-// Pass strip top-centre and a centred scroll hint along the bottom. When the opponent is
+// mirrored masks fading toward the centre, a stacked centre text block
+// (Fighter A name / VS / Fighter B name), the next-event Press Pass strip
+// top-centre and a centred scroll hint along the bottom. When the opponent is
 // TBA / has no photo, it degrades to a single-fighter composition with the VS
-// omitted. No slash anywhere (ADR 0012). The central VS is a static mark — no
-// interaction scales a raster (memory/no_fullscreen_flip_transition.md).
-import { useRef } from 'react'
+// omitted. No slash anywhere (ADR 0012).
+//
+// Issue #27  — data-hero-pin attribute lets FloatingDock watch this section.
+// Issue #34  — The Parting: scroll-scrubbed fighter translation + VS dissolve +
+//              motion-only slash draw-through between Act 1 and Act 2.
+// Issue #35  — Mobile / reduced-motion: ScrollTrigger pin skipped; Act 1 + Act 2
+//              stack in normal document flow.
+import { forwardRef, useRef } from 'react'
 import { useMantineTheme } from '@mantine/core'
 import { useMediaQuery, useReducedMotion } from '@mantine/hooks'
+import { Link } from '@tanstack/react-router'
 import { api } from '../../../convex/_generated/api'
 import { useStableQuery } from '#/hooks/useStableQuery'
 import { cornerName, derivePressPass } from '#/lib/heroLoader'
 import type { HeroLoaderData, NextEventData } from '#/lib/heroLoader'
+import { MENS_DIVISIONS, WOMENS_DIVISIONS } from '#/lib/weightClasses'
 import { gsap, useGSAP } from '#/lib/gsap'
 import classes from './HeroChapter.module.css'
 
 interface HeroChapterProps {
-  // Server-loaded seed (issue #25). Used until the live Convex subscription
-  // resolves, so the first paint never shows loading placeholders.
   initialData: HeroLoaderData
 }
 
 type Corner = NonNullable<NextEventData>['fighterA']
 
-// A corner is "renderable" as a real fighter when it carries a photo. A corner
-// fighter with no photo, or a genuinely unannounced (null) corner, is treated as
-// TBA — it collapses the Face-off into the single-fighter fallback (no VS).
 function isRenderable(fighter: Corner): boolean {
   return Boolean(fighter?.photoUrl)
 }
 
-// Champion when the fighter holds their division (ranking 0). gold-5 "C" badge
-// is reserved for titleholders only.
 function isChampion(fighter: Corner): boolean {
   return fighter?.ranking === 0
 }
@@ -44,28 +44,88 @@ interface CornerViewProps {
   showName: boolean
 }
 
-function CornerView({ fighter, side, showName }: CornerViewProps) {
-  const renderable = isRenderable(fighter)
-  const sideClass = side === 'left' ? classes.cornerLeft : classes.cornerRight
-  return (
-    <div className={`${classes.corner} ${sideClass}`} aria-hidden="true">
-      <div className={classes.photoSlot}>
-        {renderable ? (
-          <img className={classes.photo} src={fighter!.photoUrl} alt="" />
-        ) : (
-          <div className={classes.fallback} />
+// forwardRef so HeroChapter can attach GSAP refs to the corner root divs
+// for the scrub-linked parting animation (issue #34).
+const CornerView = forwardRef<HTMLDivElement, CornerViewProps>(
+  function CornerView({ fighter, side, showName }, ref) {
+    const renderable = isRenderable(fighter)
+    const sideClass = side === 'left' ? classes.cornerLeft : classes.cornerRight
+    return (
+      <div ref={ref} className={`${classes.corner} ${sideClass}`} aria-hidden="true">
+        <div className={classes.photoSlot}>
+          {renderable ? (
+            <img className={classes.photo} src={fighter!.photoUrl} alt="" />
+          ) : (
+            <div className={classes.fallback} />
+          )}
+        </div>
+        {showName && (
+          <div className={classes.caption}>
+            {isChampion(fighter) && (
+              <span className={classes.champBadge} title="Champion">C</span>
+            )}
+            <span className={classes.cornerName}>{cornerName(fighter)}</span>
+          </div>
         )}
       </div>
-      {showName && (
-        <div className={classes.caption}>
-          {isChampion(fighter) && (
-            <span className={classes.champBadge} title="Champion">
-              C
-            </span>
-          )}
-          <span className={classes.cornerName}>{cornerName(fighter)}</span>
+    )
+  }
+)
+
+// Act 2 mobile teaser — surfaces the weight-class categories that desktop users
+// see after scrolling through the pinned hero. Shown only on mobile/reduced-motion.
+function MobileAct2() {
+  const allMens = MENS_DIVISIONS.slice().reverse()
+  const allWomens = WOMENS_DIVISIONS.slice().reverse()
+
+  return (
+    <div className={classes.mobileAct2} aria-label="Weight class divisions">
+      <div className={classes.act2Eyebrow}>Explore Divisions</div>
+      <div className={classes.act2Columns}>
+        <div className={classes.act2Group}>
+          <div className={classes.act2GroupLabel}>Men&apos;s</div>
+          <ul className={classes.act2List} role="list">
+            {allMens.map((div) => {
+              const slug = div.key.replace(/^mens-/, '')
+              return (
+                <li key={div.key}>
+                  <Link
+                    to="/divisions/$gender/$weightClass"
+                    params={{ gender: 'mens', weightClass: slug }}
+                    className={classes.act2Link}
+                  >
+                    <span className={classes.act2Abbr}>{div.abbr}</span>
+                    <span className={classes.act2Label}>{div.shortLabel}</span>
+                    <span className={classes.act2Weight}>{div.weightLimit}</span>
+                  </Link>
+                </li>
+              )
+            })}
+          </ul>
         </div>
-      )}
+        <div className={classes.act2Group}>
+          <div className={classes.act2GroupLabel}>Women&apos;s</div>
+          <ul className={classes.act2List} role="list">
+            {allWomens.map((div) => {
+              const slug = div.key.replace(/^womens-/, '')
+              return (
+                <li key={div.key}>
+                  <Link
+                    to="/divisions/$gender/$weightClass"
+                    params={{ gender: 'womens', weightClass: slug }}
+                    className={classes.act2Link}
+                  >
+                    <span className={classes.act2Abbr}>{div.abbr}</span>
+                    <span className={classes.act2Label}>{div.shortLabel}</span>
+                    <span className={classes.act2Weight}>{div.weightLimit}</span>
+                  </Link>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      </div>
+      <div className={classes.act2Divider} aria-hidden="true" />
     </div>
   )
 }
@@ -76,32 +136,28 @@ export default function HeroChapter({ initialData }: HeroChapterProps) {
   const vsRef = useRef<HTMLDivElement>(null)
   const scrollHintRef = useRef<HTMLDivElement>(null)
   const pressPassRef = useRef<HTMLDivElement>(null)
+  const cornerLeftRef = useRef<HTMLDivElement>(null)
+  const cornerRightRef = useRef<HTMLDivElement>(null)
+  const slashRef = useRef<HTMLDivElement>(null)
   const prefersReduced = useReducedMotion()
   const theme = useMantineTheme()
-  const isMobile = useMediaQuery(`(max-width: calc(${theme.breakpoints.sm} - 0.0625em))`)
+  // Raw 47.99em matches mobile below Mantine's sm breakpoint (48em).
+  // Defaults to false during SSR to avoid hydration mismatches.
+  const isMobile = useMediaQuery('(max-width: 47.99em)') ?? false
 
-  // Loader data seeds the first (server-rendered) paint; once the live Convex
-  // subscription resolves (anything but undefined) it takes over, so realtime
-  // updates still propagate after hydration. getNextEvent already joins the
-  // main bout with BOTH full fighter docs (name, photoUrl, ranking) — the same
-  // query THE CARD's press pass uses — so no new Convex function is needed for
-  // the two-headliner Face-off.
+  // Stacked layout on mobile OR when the user prefers reduced motion.
+  const isStacked = isMobile || Boolean(prefersReduced)
+
   const liveNextEvent = useStableQuery(api.events.getNextEvent, {})
   const nextEvent = liveNextEvent === undefined ? initialData.nextEvent : liveNextEvent
 
   const fighterA = nextEvent?.fighterA ?? null
   const fighterB = nextEvent?.fighterB ?? null
 
-  // The Face-off needs two renderable corners. If the opponent is TBA / has no
-  // photo, fall back to a single-fighter composition with the VS omitted.
   const isFaceoff = isRenderable(fighterA) && isRenderable(fighterB)
-
-  // null when there is genuinely no upcoming event — the press pass content is
-  // simply omitted (never "TBA" placeholders).
   const pressPass = derivePressPass(nextEvent)
 
   useGSAP(() => {
-    // Reduced motion: full static Face-off — everything visible, no transforms.
     if (prefersReduced) {
       const targets: HTMLElement[] = []
       if (vsRef.current) targets.push(vsRef.current)
@@ -116,14 +172,12 @@ export default function HeroChapter({ initialData }: HeroChapterProps) {
     const mm = gsap.matchMedia()
 
     mm.add(`(min-width: ${bp})`, () => {
-      // Right-sized pin: one fade beat. The interim hero held a +=200% pin for a
-      // single chrome fade (logged /code-review finding); the Face-off resolves
-      // its chrome in one short scrub, so the pin only needs to cover that beat.
+      // Extended pin: covers the chrome fade beat AND the parting beat (#34).
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: heroRef.current,
           start: 'top top',
-          end: '+=60%',
+          end: '+=150%',
           pin: true,
           scrub: 0.8,
           fastScrollEnd: true,
@@ -132,22 +186,41 @@ export default function HeroChapter({ initialData }: HeroChapterProps) {
         },
       })
 
-      // The Face-off photos + VS hold the frame; the scroll chrome (press pass,
-      // scroll hint) fades as the pinned scroll advances, leaving a clean poster
-      // before the next chapter.
+      // Beat 1 (0 → 0.2): Chrome fade
       tl.to(
         [scrollHintRef.current, pressPassRef.current],
-        { opacity: 0, duration: 1, ease: 'none' },
+        { opacity: 0, duration: 0.2, ease: 'power1.in' },
         0
       )
 
+      // Beat 2 (0.2 → 0.7): Fighter parting + VS/name stack dissolve
+      if (isFaceoff) {
+        tl.to(cornerLeftRef.current, { xPercent: -100, duration: 0.5, ease: 'power2.inOut' }, 0.2)
+        tl.to(cornerRightRef.current, { xPercent: 100, duration: 0.5, ease: 'power2.inOut' }, 0.2)
+        tl.to(vsRef.current, { opacity: 0, duration: 0.3, ease: 'power1.in' }, 0.2)
+
+        // Beat 3 (0.55 → 0.9): Motion-only slash wipe — draws in then erases
+        tl.fromTo(
+          slashRef.current,
+          { scaleX: 0, opacity: 1 },
+          { scaleX: 1, duration: 0.2, ease: 'power3.out' },
+          0.55
+        )
+        tl.to(
+          slashRef.current,
+          { scaleX: 0, duration: 0.15, ease: 'power3.in', transformOrigin: 'right center' },
+          0.75
+        )
+      }
+
       return () => {
         tl.scrollTrigger?.kill()
-        // Scoped clearProps — only the prop the timeline touched. Never 'all':
-        // that wipes React inline styles (memory/gsap_clearprops_all_wipes_inline).
-        gsap.set([scrollHintRef.current, pressPassRef.current], {
-          clearProps: 'opacity',
-        })
+        gsap.set([scrollHintRef.current, pressPassRef.current], { clearProps: 'opacity' })
+        if (isFaceoff) {
+          gsap.set([cornerLeftRef.current, cornerRightRef.current], { clearProps: 'xPercent' })
+          gsap.set(vsRef.current, { clearProps: 'opacity' })
+          gsap.set(slashRef.current, { clearProps: 'scaleX,opacity' })
+        }
       }
     })
 
@@ -155,11 +228,13 @@ export default function HeroChapter({ initialData }: HeroChapterProps) {
   }, { scope: heroRef, dependencies: [prefersReduced, isMobile, isFaceoff], revertOnUpdate: true })
 
   return (
-    <section ref={heroRef} className={classes.hero} aria-label="UFC Fighter Rankings">
-      {!isMobile && (
-        // Next-event indicator — top-centre slimmed Press Pass strip. Outer div
-        // always renders so the GSAP timeline target (pressPassRef) exists; the
-        // info content is omitted when there is no upcoming event.
+    <section
+      ref={heroRef}
+      className={`${classes.hero} ${isStacked ? classes.heroStacked : ''}`}
+      aria-label="UFC Fighter Rankings"
+      data-hero-pin
+    >
+      {!isStacked && (
         <div ref={pressPassRef} className={classes.pressPass} aria-label="Next UFC event">
           {pressPass && (
             <div className={classes.pressPassInfo}>
@@ -174,11 +249,13 @@ export default function HeroChapter({ initialData }: HeroChapterProps) {
         </div>
       )}
 
-      {/* Face-off stage — two bottom-anchored corners + central VS */}
-      <div ref={facestageRef} className={classes.facestage}>
+      <div
+        ref={facestageRef}
+        className={`${classes.facestage} ${isStacked ? classes.facestageStacked : ''}`}
+      >
         {isFaceoff ? (
           <>
-            <CornerView fighter={fighterA} side="left" showName={false} />
+            <CornerView ref={cornerLeftRef} fighter={fighterA} side="left" showName={false} />
             {/* Stacked centre: Fighter A name → VS → Fighter B name */}
             <div ref={vsRef} className={classes.vsStack} aria-hidden="true">
               <span className={classes.cornerName}>
@@ -191,21 +268,28 @@ export default function HeroChapter({ initialData }: HeroChapterProps) {
                 {cornerName(fighterB)}
               </span>
             </div>
-            <CornerView fighter={fighterB} side="right" showName={false} />
+            <CornerView ref={cornerRightRef} fighter={fighterB} side="right" showName={false} />
           </>
         ) : (
-          // Single-fighter fallback: one corner holds the frame, VS omitted.
           <CornerView fighter={fighterA} side="right" showName={isRenderable(fighterA)} />
         )}
       </div>
 
-      {!isMobile && (
-        // Scroll hint — centred along the bottom (was the Press Pass slot).
+      {/* Motion-only slash wipe (#34). Invisible at rest (scaleX: 0); only
+          appears during the scroll-scrubbed Act 1→Act 2 transition. */}
+      {isFaceoff && !isStacked && (
+        <div ref={slashRef} className={classes.slashWipe} aria-hidden="true" />
+      )}
+
+      {!isStacked && (
         <div ref={scrollHintRef} className={classes.scrollHint} aria-hidden="true">
           <span className={classes.scrollLabel}>SCROLL</span>
           <div className={classes.scrollLine} />
         </div>
       )}
+
+      {/* Act 2 — stacked below Act 1 on mobile/reduced-motion only. */}
+      {isStacked && <MobileAct2 />}
     </section>
   )
 }
